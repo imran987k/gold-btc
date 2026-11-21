@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10141c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Gold & BTC SMC Analyzer</title>
+<style>
+:root{--bg:#10141c;--sf:#181e29;--ln:#2a3342;--tx:#e8ecf3;--mu:#8b97ab;--buy:#2fbf71;--sell:#ef5350;--no:#c9a227;--ac:#e0b34a}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,"Noto Sans Bengali",sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.w{max-width:720px;margin:0 auto;padding:12px}
+h1{font-size:18px;margin:0}h2{font-size:15px;margin:16px 0 8px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+button,select,input{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:8px 12px}
+button{cursor:pointer}button.p{background:var(--ac);color:#10141c;border-color:var(--ac);font-weight:600}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--ac)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.px{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.px button{text-align:left;padding:10px 12px}.px button.on{border-color:var(--ac)}
+.px b{font-size:19px;display:block}.up{color:var(--buy)}.dn{color:var(--sell)}.mu{color:var(--mu);font-size:13px}
+.tabs{display:flex;border-bottom:1px solid var(--ln);margin:12px 0}
+.tabs button{flex:1;border:0;border-radius:0;background:none;color:var(--mu);border-bottom:2px solid transparent}
+.tabs button.on{color:var(--tx);border-color:var(--ac)}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:12px;margin:8px 0}
+.big{font-size:30px;font-weight:700;letter-spacing:.5px}
+.BUY{color:var(--buy)}.SELL{color:var(--sell)}.NO{color:var(--no)}
+.chip{display:inline-block;padding:1px 9px;border-radius:99px;font-size:13px;font-weight:600;border:1px solid currentColor}
+table{width:100%;border-collapse:collapse}td,th{padding:8px 4px;border-bottom:1px solid var(--ln);text-align:left;font-size:14px}
+tr.t{cursor:pointer}tr.t.on{background:#1f2735}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px}.kv div span{display:block}
+label{display:block;font-size:13px;color:var(--mu)}input{width:100%}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+a{color:var(--ac)}.warn{border-color:var(--no);color:var(--no)}
+.hide{display:none!important}
+#au{position:fixed;inset:0;background:var(--bg);z-index:9;overflow:auto;padding:env(safe-area-inset-top) 0}
+#au .card{margin:24px 0}#au input{margin-bottom:10px}.er{color:var(--sell);min-height:20px;font-size:13px}
+.um{display:flex;justify-content:space-between;align-items:center;margin:4px 0}.um button{padding:3px 10px;font-size:13px}
+</style></head><body><div class="w">
+<div class="top"><h1>Gold &amp; BTC SMC বিশ্লেষক</h1>
+<div class="row" style="margin:0"><select id="auto" aria-label="Auto refresh"><option value="0">Auto: বন্ধ</option><option value="15">১৫ সেকেন্ড (ক্রেডিট বেশি)</option><option value="30">৩০ সেকেন্ড</option><option value="60" selected>১ মিনিট</option><option value="300">৫ মিনিট (ক্রেডিট কম)</option></select><button class="p" id="rf">Refresh</button></div></div>
+<div class="um"><span class="mu" id="un"></span><label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--tx)"><input id="al" type="checkbox" style="width:auto">🔔 অ্যালার্ট</label><button id="lo">Logout</button></div>
+<div class="mu" id="st">লোড হচ্ছে…</div>
+<div class="px" id="px" style="margin-top:8px"></div>
+<details class="card" open><summary>🔑 ডাটা সোর্স (TradingView-এর সাথে মিল)</summary>
+<p class="mu">BTC: Bitstamp (ফ্রি, কী লাগে না, লাইভ WebSocket)। গোল্ড: OANDA practice টোকেন। এই দুটোই TradingView-এর BITSTAMP:BTCUSD ও OANDA:XAUUSD-এর সোর্স। Twelve Data শুধু ফলব্যাক (ঐচ্ছিক, ফ্রি ৮০০ ক্রেডিট/দিন)। দৈনিক %: গোল্ডে নিউ ইয়র্ক ৫টা, BTC-তে UTC ০০:০০-এর আগের ক্লোজ থেকে।</p>
+<div class="mu" id="bsst">BTC লাইভ: লগইনের পর চালু হবে</div>
+<label>OANDA practice API টোকেন (গোল্ডের জন্য)</label><input id="ot" type="password" placeholder="OANDA টোকেন" autocomplete="off">
+<div class="row"><select id="oop" aria-label="OANDA দাম"><option value="M">Mid দাম</option><option value="B">Bid দাম</option></select><button class="p" id="ots">Save ও টেস্ট</button><button id="oto">মুছুন</button></div><div class="mu" id="os"></div>
+<label style="margin-top:10px">Twelve Data key (ফলব্যাক, ঐচ্ছিক)</label><input id="tk" type="password" placeholder="Twelve Data API key" autocomplete="off"><div class="row"><button class="p" id="tks">Save ও Refresh</button><button id="tkc">মুছুন</button></div><label>গোল্ড লাইভ গতি (Twelve Data)</label><select id="lg"><option value="8">টার্বো — প্রতি ৮ সেকেন্ড (দিনে সর্বোচ্চ ~৮৭ মিনিট)</option><option value="15">দ্রুত — প্রতি ১৫ সেকেন্ড (~২.৭ ঘণ্টা)</option><option value="30">স্বাভাবিক — প্রতি ৩০ সেকেন্ড (~৫.৪ ঘণ্টা)</option><option value="60">সাশ্রয়ী — প্রতি ৬০ সেকেন্ড (~১০.৮ ঘণ্টা)</option></select><div class="mu">ফ্রি Twelve Data-তে দিনে ৮০০ রিকোয়েস্ট; ৬৫০ পার হলে লাইভ দাম থামে। OANDA টোকেন থাকলে এই সীমা নেই, প্রতি ১ সেকেন্ডে আসে।</div></details>
+<div class="tabs"><button class="on" data-t="a">বিশ্লেষণ</button><button data-t="n">নিউজ</button><button data-t="c">ক্যালকুলেটর</button><button data-t="v">TradingView</button></div>
+<div id="a"><div id="a1"></div><div id="aiHost"><h2>🤖 AI ট্রেড সহকারী</h2><div class="card" id="ai"><div class="top"><span class="mu">লাইভ চার্ট দেখে BUY/SELL বলে</span><span class="chip" id="aiMode" style="color:var(--ac)">বিল্ট-ইন বিশ্লেষক</span></div><div id="aiLog" style="max-height:320px;overflow:auto;margin:8px 0"></div><div class="row" id="aiQ" style="gap:6px"><button data-q="এখন BUY না SELL?">BUY না SELL?</button><button data-q="Entry কোথায়?">Entry কোথায়?</button><button data-q="SL ও TP কত?">SL ও TP</button><button data-q="কেন এই সিগন্যাল?">কেন?</button><button data-q="ঝুঁকি কেমন?">ঝুঁকি</button></div><div class="row" style="flex-wrap:nowrap"><input id="aiIn" placeholder="AI-কে লিখুন… (যেমন: এখন কি SELL নেওয়া যায়?)" style="flex:1;min-width:0"><button class="p" id="aiSend">পাঠান</button></div><details style="margin-top:8px"><summary class="mu" style="cursor:pointer">⚙ AI সেটিংস (ফ্রি ও পেইড)</summary><label style="margin-top:8px">AI সার্ভিস</label><select id="aiPv"><option value="gemini">Google Gemini — ফ্রি (সুপারিশ)</option><option value="groq">Groq (Llama / gpt-oss) — ফ্রি</option><option value="cerebras">Cerebras (gpt-oss-120b, Qwen3) — ফ্রি</option><option value="openrouter">OpenRouter — ফ্রি মডেল</option><option value="custom">কাস্টম — যেকোনো OpenAI-সামঞ্জস্যপূর্ণ সার্ভিস</option><option value="claude">Claude (Anthropic) — পেইড</option></select><div class="mu" id="aiNote" style="margin:6px 0"></div><div id="aiBuW" class="hide"><label>Base URL (শেষে /chat/completions ছাড়া)</label><input id="aiBu" placeholder="https://api.example.com/v1" autocomplete="off"></div><label>API key</label><input id="aiKey" type="password" autocomplete="off"><label style="margin-top:6px">মডেল (বদলানো যায়)</label><input id="aiMd" autocomplete="off"><div class="row"><button class="p" id="aiKs">Save</button><button id="aiKc">Key মুছুন</button></div><div class="mu">key ছাড়া বিল্ট-ইন মোডে অ্যাপের নিজস্ব বিশ্লেষণ থেকে উত্তর আসে। key দিলে আপনার প্রশ্ন ও লাইভ চার্ট ডাটা সরাসরি ওই সার্ভিসের সার্ভারে যায় (এই অ্যাপের কোনো সার্ভার নেই)। ফ্রি সার্ভিসে ডাটা মডেল উন্নয়নে ব্যবহার হতে পারে — তাদের শর্ত দেখে নিন। key শুধু এই ডিভাইসের ব্রাউজারে থাকে — ফাইল অন্যকে পাঠালে key মুছে নিন।</div></details></div></div><div id="a3"></div></div><div id="n" class="hide"><div id="ec"></div><div id="nl"></div></div><div id="v" class="hide"></div>
+<div id="c" class="hide">
+<div class="card"><b>🛡 Blue Guardian প্রপ রিস্ক ট্র্যাকার</b>
+<p class="mu">নিয়ম প্রোগ্রাম ও সময়ভেদে আলাদা, বদলাতেও পারে। প্রিসেট শুধু শুরুর মান; Blue Guardian-এর অফিসিয়াল Rules পেজ দেখে ঘরগুলো মিলিয়ে নিন। ড্রডাউন ট্রেইলিং ধরা হয়েছে (বেশি সতর্ক), চাইলে Static করুন।</p>
+<div class="g2"><div><label>প্রোগ্রাম</label><select id="pp"><option value="i">Instant</option><option value="s1">1-Step Standard</option><option value="s2">2-Step / Unlimited</option><option value="el">Elite 2-Step</option><option value="cr">Crypto 1-Step</option><option value="cu">Custom</option></select></div>
+<div><label>অ্যাকাউন্ট সাইজ ($)</label><input id="ps" type="number" value="10000"></div>
+<div><label>বর্তমান ব্যালেন্স/ইকুইটি ($)</label><input id="pb" type="number"></div>
+<div><label>আজকের শুরুর ব্যালেন্স ($)</label><input id="pd" type="number"></div>
+<div><label>সর্বোচ্চ ক্লোজড ব্যালেন্স ($)</label><input id="ph" type="number"></div>
+<div><label>ডেইলি লস (%)</label><input id="pl" type="number" step="any"></div>
+<div><label>ম্যাক্স ড্রডাউন (%)</label><input id="pm" type="number" step="any"></div>
+<div><label>ড্রডাউন টাইপ</label><select id="pt"><option value="t">Trailing</option><option value="l">Trailing (ইনিশিয়ালে লক)</option><option value="s">Static</option></select></div>
+<div><label>প্রফিট টার্গেট (%)</label><input id="pg" type="number" step="any"></div></div>
+<div id="po" style="margin-top:8px"></div><div class="row"><button class="p" id="pu">এই রিস্ক ক্যালকুলেটরে ব্যবহার করুন</button></div></div>
+<div class="card"><div id="cst" style="margin-bottom:8px"></div><label style="display:flex;gap:6px;align-items:center;color:var(--tx);margin-bottom:8px"><input id="cm" type="checkbox" style="width:auto">✏ ম্যানুয়াল এডিট (Entry/SL/TP নিজে দেব)</label><div class="g2">
+<div><label>ইনস্ট্রুমেন্ট</label><select id="ci"><option value="XAU">XAUUSD</option><option value="BTC">BTCUSD</option></select></div>
+<div><label>ব্যালেন্স ($)</label><input id="cb" type="number" value="1000"></div>
+<div><label>রিস্ক (%)</label><input id="cr" type="number" value="1" step="0.1"></div>
+<div><label>Entry (অটো)</label><input id="ce" readonly type="number" step="any"></div>
+<div><label>Stop Loss (অটো)</label><input id="cs" readonly type="number" step="any"></div>
+<div><label>Take Profit (TP1, অটো)</label><input id="ct" readonly type="number" step="any"></div><div><label>স্প্রেড (দাম ইউনিট, SL দূরত্বে যোগ হয়)</label><input id="csp" type="number" step="any" value="0"></div></div>
+<div class="row"><button class="p" id="cu">অ্যাপের সেটআপ আবার নিন</button></div></div>
+<div class="card" id="co"></div>
+<div class="card"><b>📊 ব্যাকটেস্ট</b><p class="mu">বর্তমান ইনস্ট্রুমেন্ট ও টাইমফ্রেমে (উপরের বিশ্লেষণ ট্যাবে যেটি নির্বাচিত) ~১০০০ ক্যান্ডেলের ইতিহাসে সিগন্যাল চালিয়ে দেখে।</p><button class="p" id="bt">ব্যাকটেস্ট চালান</button><div id="bo" style="margin-top:8px"></div></div>
+<div class="card"><b>🧪 মাল্টি-টাইমফ্রেম ব্যাকটেস্ট (গ্রেড A/B/C)</b><p class="mu">৪টি টাইমফ্রেম (15m, 1h, 4h, 1d) একসাথে ধরে অ্যাপের গ্রেডিং নিয়মে অতীতের সিগন্যাল চালিয়ে দেখে কোন গ্রেড লাভজনক। বর্তমান ইনস্ট্রুমেন্টের জন্য চলে। Twelve Data সোর্স হলে ৪টি ক্রেডিট ও প্রায় ৩০ সেকেন্ড লাগে।</p><button class="p" id="bm">মাল্টি-টাইমফ্রেম ব্যাকটেস্ট চালান</button><div id="bmo" style="margin-top:8px"></div></div>
+<div class="card"><b>📓 সিগন্যাল জার্নাল</b><p class="mu">অ্যাপ খোলা থাকলে প্রতিটি ENTRY NOW সেটআপ (Entry/SL/TP1 সহ) অটো সেভ হয় এবং দাম SL/TP1 ছুঁলে ফলাফল বসে।</p><div id="jo"></div><div class="row"><button id="jx" class="p">CSV এক্সপোর্ট</button><button id="jy">CSV কপি</button><button id="jc">জার্নাল মুছুন</button></div></div>
+<div class="card mu"><b style="color:var(--tx)">রিস্ক ম্যানেজমেন্ট নিয়ম</b><br>• প্রতি ট্রেডে ১–২% এর বেশি নয়<br>• দৈনিক সর্বোচ্চ লস ৩–৫%, পৌঁছালে ট্রেড বন্ধ<br>• ন্যূনতম RR ১:২<br>• হাই-ইম্প্যাক্ট নিউজের আগে-পরে ট্রেড এড়ান<br>• একসাথে একাধিক সম-দিকের পজিশনে মোট রিস্ক ২% এর নিচে রাখুন</div></div>
+<p class="mu">ডাটা: Twelve Data (XAU/USD, BTC/USD)। এটি শিক্ষামূলক টুল, আর্থিক পরামর্শ নয়। সিগন্যাল গ্যারান্টি নয়।</p>
+</div>
+<div id="bn" class="card warn hide" style="position:fixed;top:8px;left:8px;right:8px;z-index:20;background:var(--sf)"></div>
+<div id="au" class="hide"><div class="w"><h1>Gold &amp; BTC SMC বিশ্লেষক</h1>
+<div class="card"><div class="tabs" style="margin-top:0"><button class="on" data-m="login">Login</button><button data-m="reg">Register</button></div>
+<div class="rg hide"><label>নাম</label><input id="an" autocomplete="name"></div>
+<label>ইমেইল</label><input id="ae" type="email" autocomplete="email">
+<label>পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="ap" type="password" autocomplete="current-password">
+<div class="rg hide"><label>পাসওয়ার্ড আবার দিন</label><input id="ap2" type="password" autocomplete="new-password"></div>
+<div class="er" id="aer"></div><button class="p" id="ag" style="width:100%">Login</button>
+<p class="mu">অ্যাকাউন্ট ও সেটিংস শুধু এই ডিভাইসে সংরক্ষিত থাকে। অ্যাপ মুছলে বা ডাটা ক্লিয়ার করলে তা হারাবে। পাসওয়ার্ড ভুলে গেলে রিসেটের সুযোগ নেই।</p></div></div></div>
+<script>
+const $=s=>document.querySelector(s),TFS=['5m','15m','1h','4h','1d'],WT={'5m':1,'15m':1.5,'1h':2,'4h':2.5,'1d':3};
+const IN={XAU:{s:'XAU/USD',n:'XAUUSD',d:2,cs:100,u:'লট'},BTC:{s:'BTC/USD',n:'BTCUSD',d:1,cs:1,u:'লট (১ লট = ১ BTC)'}};
+let inst='XAU',tf='1h',D={},plan={},timer=null,news=null;
+const ema=(a,p)=>{const k=2/(p+1);let e=a[0];for(const v of a)e=v*k+e*(1-k);return e};
+const emaS=(a,p)=>{const k=2/(p+1);let e=a[0];return a.map(v=>e=v*k+e*(1-k))};
+const rsi=a=>{let g=0,l=0,d;for(let i=1;i<=14;i++){d=a[i]-a[i-1];d>0?g+=d:l-=d}g/=14;l/=14;for(let i=15;i<a.length;i++){d=a[i]-a[i-1];g=(g*13+(d>0?d:0))/14;l=(l*13+(d<0?-d:0))/14}return l?100-100/(1+g/l):100};
+const atr=k=>{const t=i=>Math.max(k[i].h-k[i].l,Math.abs(k[i].h-k[i-1].c),Math.abs(k[i].l-k[i-1].c));let s=0;for(let i=1;i<=14;i++)s+=t(i);s/=14;for(let i=15;i<k.length;i++)s=(s*13+t(i))/14;return s};
+const eq=(s,tol,hi)=>{for(let x=s.length-1;x>0;x--)for(let y=x-1;y>=Math.max(0,x-6);y--)if(Math.abs(s[x].p-s[y].p)<tol)return hi?Math.max(s[x].p,s[y].p):Math.min(s[x].p,s[y].p);return null};
+function analyze(k){
+const n=k.length,c=k.map(x=>x.c),px=c[n-1],e50=ema(c,50),e200=ema(c,200),r=rsi(c),a=atr(k);
+const sh=[],sl=[];
+for(let i=3;i<n-3;i++){let H=1,L=1;for(let j=1;j<=3;j++){if(k[i].h<=k[i-j].h||k[i].h<=k[i+j].h)H=0;if(k[i].l>=k[i-j].l||k[i].l>=k[i+j].l)L=0}if(H)sh.push({i,p:k[i].h});if(L)sl.push({i,p:k[i].l})}
+const cl=[];for(const p of [...sh,...sl].map(s=>s.p).sort((x,y)=>x-y)){const g=cl[cl.length-1];if(g&&p-g.hi<=a*.5){g.hi=p;g.n++}else cl.push({lo:p,hi:p,n:1})}
+for(const g of cl){g.lo-=a*.1;g.hi+=a*.1}
+const sr={s:cl.filter(g=>(g.lo+g.hi)/2<px).sort((x,y)=>y.hi-x.hi).slice(0,3),r:cl.filter(g=>(g.lo+g.hi)/2>=px).sort((x,y)=>x.lo-y.lo).slice(0,3)};
+let sc=0;const trend=px>e50&&e50>e200?1:px<e50&&e50<e200?-1:0;sc+=trend*2;
+let st=0;const h2=sh.slice(-2),l2=sl.slice(-2);
+if(h2.length==2&&l2.length==2){if(h2[1].p>h2[0].p&&l2[1].p>l2[0].p)st=1;else if(h2[1].p<h2[0].p&&l2[1].p<l2[0].p)st=-1}
+sc+=st*2;let bos=0;const lh=sh[sh.length-1],ll=sl[sl.length-1];
+if(lh&&px>lh.p)bos=1;else if(ll&&px<ll.p)bos=-1;sc+=bos;
+let ch=0,chp=null,chI=null,chJ=null;
+for(let j=n-1;j>=Math.max(10,n-25)&&!ch;j--){const H=sh.filter(x=>x.i<=j-4),Lw=sl.filter(x=>x.i<=j-4);if(H.length<2||Lw.length<2)continue;const h1=H[H.length-1],h0=H[H.length-2],l1=Lw[Lw.length-1],l0=Lw[Lw.length-2];
+if(h1.p<h0.p&&l1.p<l0.p&&c[j]>h1.p&&c[j-1]<=h1.p){ch=1;chp=h1.p;chI=h1.i;chJ=j}else if(h1.p>h0.p&&l1.p>l0.p&&c[j]<l1.p&&c[j-1]>=l1.p){ch=-1;chp=l1.p;chI=l1.i;chJ=j}}
+if((ch==1&&px<chp-a)||(ch==-1&&px>chp+a))ch=0;if(!ch){chp=null;chI=null;chJ=null}sc+=ch*1.5;
+const fv=[];for(let i=Math.max(2,n-120);i<n;i++){if(k[i].l>k[i-2].h)fv.push({d:1,lo:k[i-2].h,hi:k[i].l,i});else if(k[i].h<k[i-2].l)fv.push({d:-1,lo:k[i].h,hi:k[i-2].l,i})}
+const fg=fv.filter(f=>{for(let j=f.i+1;j<n;j++){if(f.d==1&&k[j].l<=f.lo)return 0;if(f.d==-1&&k[j].h>=f.hi)return 0}return f.hi-f.lo>a*.1}).slice(-4);
+let fs=0;for(const f of fg)if(px>=f.lo-a*.5&&px<=f.hi+a*.5)fs+=f.d;fs=Math.max(-1,Math.min(1,fs));sc+=fs;
+const bsl=eq(sh,a*.25,1),ssl=eq(sl,a*.25,0);let sw=0,swd=0,swu=0;const swe=[];
+for(const s of sh.slice(-5))for(let j=n-6;j<n;j++)if(j>s.i+3&&k[j].h>s.p&&k[j].c<s.p){swd=1;swe.push({j,p:s.p,si:s.i,d:-1})}
+for(const s of sl.slice(-5))for(let j=n-6;j<n;j++)if(j>s.i+3&&k[j].l<s.p&&k[j].c>s.p){swu=1;swe.push({j,p:s.p,si:s.i,d:1})}
+sw=swd&&swu?0:swd?-1:swu?1:0;
+sc+=sw*1.5;
+const zs=[];for(let i=1;i<n-1;i++){if(Math.abs(k[i].c-k[i].o)>a*1.5){const p=k[i-1];
+if(k[i].c>k[i].o&&p.c<p.o)zs.push({d:1,lo:p.l,hi:p.o,i});
+if(k[i].c<k[i].o&&p.c>p.o)zs.push({d:-1,lo:p.o,hi:p.h,i})}}
+const vz=zs.filter(z=>{for(let j=z.i+1;j<n;j++){if(z.d==1&&c[j]<z.lo)return 0;if(z.d==-1&&c[j]>z.hi)return 0}return 1});
+const dem=vz.filter(z=>z.d==1&&z.lo<px).sort((x,y)=>y.hi-x.hi)[0]||null,sup=vz.filter(z=>z.d==-1&&z.hi>px).sort((x,y)=>x.lo-y.lo)[0]||null;
+let zin=0;if(dem&&px<=dem.hi+a*.2)zin=1;if(sup&&px>=sup.lo-a*.2)zin=-1;sc+=zin*1.5;
+let srs=0;{const S=sr.s[0],R=sr.r[0],w=g=>g.n>=4?1.5:g.n==3?1:.5;if(S&&px-S.hi<=a*.3)srs+=w(S);if(R&&R.lo-px<=a*.3)srs-=w(R)}sc+=srs;
+const e50s=emaS(c,50).slice(-80),e200s=emaS(c,200).slice(-80),rs=Array.from({length:80},(_,j)=>rsi(c.slice(0,n-80+j+1))),bl=bos>0?lh.p:bos<0?ll.p:null;
+if(r>70)sc-=.5;if(r<30)sc+=.5;
+return{ch,chp,sws:{h:sh.slice(-6).map(x=>x.p),l:sl.slice(-6).map(x=>x.p)},px,sc,sig:sc>=3?'BUY':sc<=-3?'SELL':'NO',trend,st,bos,fg,bsl,ssl,sw,dem,sup,zin,r,a,sr,srs,k:k.slice(-80),off:n-80,e50s,e200s,rs,bl,cl:c,shi:sh.slice(-8),sli:sl.slice(-8),swe,chI,chJ,bi:bos>0?lh.i:bos<0?ll.i:null,parts:{trend:trend*2,st:st*2,bos,ch:ch*1.5,fvg:fs,sweep:sw*1.5,zone:zin*1.5,sr:srs,rsi:r>70?-.5:r<30?.5:0}}}
+function setup(X,d,ent,z){const a=X.a>0?X.a:ent*.001,cs=[];if(z)cs.push(d==1?z.lo:z.hi);
+const sw=d==1?X.sws.l.filter(p=>p<ent):X.sws.h.filter(p=>p>ent);if(sw.length)cs.push(d==1?Math.max(...sw):Math.min(...sw));
+const ok=cs.filter(p=>{const x=Math.abs(ent-p);return x>=.3*a&&x<=3*a}),inv=ok.length?ok[0]:ent-d*1.5*a;
+let sl=inv-d*a*.25;if(Math.abs(ent-sl)<.8*a)sl=ent-d*.8*a;if(Math.abs(ent-sl)>3*a)sl=ent-d*3*a;
+const R=Math.abs(ent-sl),ds=p=>Math.abs(p-ent)/R,L=[...X.sr[d==1?'r':'s'].map(g=>d==1?g.lo:g.hi),...(d==1?X.sws.h.filter(p=>p>ent):X.sws.l.filter(p=>p<ent)),d==1?X.bsl:X.ssl].filter(p=>p!=null&&(d==1?p>ent:p<ent)).sort((x,y)=>d==1?x-y:y-x);
+let t1=ent+d*1.5*R,t2=ent+d*3*R;const f1=L.find(p=>ds(p)>=1&&ds(p)<1.5);if(f1)t1=d==1?Math.max(ent+R,f1-a*.1):Math.min(ent-R,f1+a*.1);const f2=L.find(p=>ds(p)>=2&&ds(p)<3);if(f2)t2=f2-d*a*.1;
+if(ds(t2)<ds(t1)+.3)t2=ent+d*(Math.abs(t1-ent)+R);return{sl,t1,t2,R}}
+const PQ={},esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),su=u=>/^https?:\/\//i.test(u)?esc(u):'#';
+const kl=(s,t,L=500,B)=>B?fetchK(srcOf(s),s,t,L):getK(s,t);
+async function load(){
+$('#st').textContent='আপডেট হচ্ছে…';if(!TDK&&!OT){$('#st').innerHTML='<span class="dn">গোল্ডের জন্য OANDA টোকেন (বা Twelve Data key) নিচের বক্সে দিন, তারপর Save চাপুন</span>';return}TDERR='';
+try{await Promise.all(Object.keys(IN).flatMap(m=>TFS.map(async t=>{const k=await kl(IN[m].s,t);const AA=analyze(k.slice(0,-1));AA.fc=k[k.length-1];AA.ex=[];AA.lv={...AA.fc};(D[m]=D[m]||{})[t]=AA;if(t=='5m')LP[m]=k[k.length-1].c;if(t=='5m')D[m].k5=k.slice(-500).map(x=>[x.t,x.c]);if(t=='1d')D[m].r1=k[k.length-2].c;})));
+for(const m in IN)mkPlan(m);jr();
+$('#st').textContent='সর্বশেষ আপডেট: '+new Date().toLocaleTimeString('bn-BD')+(TDERR?' · ⚠ সোর্স ত্রুটি ('+esc(TDERR)+') — ক্যাশ ডাটা ব্যবহার হচ্ছে':'')+' · সোর্স: XAU '+SN(srcOf('XAU/USD'))+', BTC '+SN(srcOf('BTC/USD'))+(tdu().n?' · TD ক্রেডিট '+tdu().n+'/800':'')}
+catch(e){$('#st').innerHTML='<span class="dn">ডাটা আনা যায়নি। '+esc(TDERR||'ইন্টারনেট চেক করে Refresh চাপুন।')+'</span>'}
+render();checkAlert();loadNews();{const q=+$('#auto').value;if(q>0&&q<300)lp()}}
+function nyB(ts){const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hourCycle:'h23',year:'numeric',month:'numeric',day:'numeric',hour:'numeric',minute:'numeric'}).formatToParts(new Date(ts*1e3)).map(x=>[x.type,+x.value])),off=Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute)/1e3-ts;let B=Date.UTC(p.year,p.month-1,p.day,17,0)/1e3-off;if(B>ts)B-=86400;return B}
+function dayRef(m){const k=D[m]&&D[m].k5;if(!k||!k.length)return null;const last=k[k.length-1][0],B=m=='XAU'?nyB(last):Math.floor(last/86400)*86400;for(let i=k.length-1;i>=0;i--)if(k[i][0]<B)return k[i][1];return null}
+const chgOf=m=>{const T=D[m],p=LP[m],r=dayRef(m)||(T&&T.r1);return r&&p?(p-r)/r*100:0};
+let lpb=0,LT=0,LGAP=15,capW=0;
+async function lp(){if(!me||!TDK||document.hidden||lpb||Date.now()-LT<LGAP*1000||tdu().n>650||!Object.keys(IN).every(m=>D[m]&&TFS.every(t=>D[m][t])))return;const ms=Object.keys(IN).filter(m=>srcOf(IN[m].s)=='td'&&!mc(m).c);if(!ms.length)return;lpb=1;LT=Date.now();
+try{const ss=ms.map(m=>IN[m].s),j=await tdq(ss.length,async()=>(await fetch(`https://api.twelvedata.com/price?symbol=${ss.map(encodeURIComponent).join(',')}&apikey=${encodeURIComponent(TDK)}`)).json());
+if(j.status=='error')throw new Error(j.message||'price error');let ok=0;for(const m of ms){const x=ss.length>1?j[IN[m].s]:j,v=+(x&&x.price);if(v>0){LP[m]=v;ok=1}}
+if(ok){liveTick();sched()}}catch(e){TDERR=e.message||'error'}lpb=0}
+function mkPlan(m){const T=D[m];let w=0,sw=0;for(const t of TFS){w+=T[t].sc*WT[t];sw+=WT[t]}w/=sw;
+const s4=T['4h'].sc,s1d=T['1d'].sc,htf=(s4*1+s1d*1.2)/2.2,mid=(T['1h'].sc*2+T['15m'].sc)/3;let sig='NO',gr='';
+/* HTF দিক: 4h+1d ওজনযুক্ত গড়; দুর্বল/উল্টো হলে 1d, তারপর পুরো-TF ওজনযুক্ত স্কোর */
+const hd=Math.abs(htf)>=.5?Math.sign(htf):Math.abs(s1d)>=1?Math.sign(s1d):Math.abs(w)>=.75?Math.sign(w):0;
+const md=Math.abs(mid)>=1?Math.sign(mid):0;
+const rv=hd&&md==-hd&&Math.abs(mid)>=1.5&&(T['1h'].ch==md||(T['15m'].ch==md&&T['1h'].bos==md));
+if(htf>=1&&mid>=1.5){sig='BUY';gr='A'}else if(htf<=-1&&mid<=-1.5){sig='SELL';gr='A'}
+else if(hd&&md==hd&&Math.abs(mid)>=1&&htf*hd>-.25){sig=hd>0?'BUY':'SELL';gr='B'}   /* HTF দুর্বল কিন্তু 1h/15m একমত */
+else if(rv){sig=md>0?'BUY':'SELL';gr='R'}
+else if(hd){sig=hd>0?'BUY':'SELL';gr='C'}   /* HTF-এর বিপরীতে 1h/15m বা মিশ্র: শুধু pullback LIMIT, Market নয় */
+const px=LP[m]||T['5m'].px,a=T['1h'].a,d=IN[m].d;let sl=null,t1=null,t2=null,why=[];
+const ad=sig=='BUY'?1:sig=='SELL'?-1:hd||md;if(ad){const q=setup(T['1h'],ad,px,ad==1?T['1h'].dem:T['1h'].sup);sl=q.sl;t1=q.t1;t2=q.t2}
+if(sig=='NO')why.push('৪ঘণ্টা/দৈনিক/১ঘণ্টা/১৫মি — কোনো টাইমফ্রেমেই স্পষ্ট দিক নেই; বাজার রেঞ্জে, অপেক্ষা করুন');
+else if(gr=='B')why.push('HTF দুর্বল কিন্তু ১ঘণ্টা/১৫মি একমত — ছোট সাইজ (গ্রেড B)');
+else if(gr=='R')why.push('রিভার্সাল: HTF-এর বিপরীতে ১ঘণ্টায় CHoCH + ১ঘণ্টা/১৫মি একমত — অর্ধেক সাইজ, zone-এ কনফার্মেশনে এন্ট্রি, ঝুঁকি বেশি (গ্রেড R)');
+else if(gr=='C')why.push('১ঘণ্টা/১৫মি HTF-এর বিপরীতে বা মিশ্র — HTF দিকে pullback LIMIT-এর অপেক্ষা, Market নয় (গ্রেড C)');
+plan[m]={sig,gr,w,htf,px,sl,t1,t2,why,ad,ref:sig=='NO'&&!!ad}}
+const f=(m,v)=>v==null?'—':(+v).toFixed(IN[m].d);
+const lab={'-1':'বেয়ারিশ','0':'নিরপেক্ষ','1':'বুলিশ'};
+const sn=s=>s=='NO'?'NO TRADE':s;
+const dl=()=>{if(!me)return 0;const t=new Date().toDateString();return(LS('gb_j'+me)||[]).filter(x=>x.r=='SL'&&new Date(x.d).toDateString()==t).length};
+function dash(){const tc=r=>r=='BUY'?'var(--buy)':r=='SELL'?'var(--sell)':'var(--no)',n=dl();
+return`<div class="card"><b>ড্যাশবোর্ড</b>${mkt()}${n>=2?`<div class="dn" style="margin:6px 0">⛔ আজ ${n}টি SL লেগেছে — আজকের জন্য নতুন Market এন্ট্রি বন্ধ রাখুন</div>`:''}`+Object.keys(IN).map(m=>{const P=plan[m],T=D[m];if(!P||!T)return'';const ag=P.sig=='NO'?0:TFS.filter(t=>T[t].sig==P.sig).length;
+return`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap"><div><b>${IN[m].n}</b> ${mc(m).c?'<span class="NO">🔒 CLOSED</span>':`<span class="${P.sig}">${sn(P.sig)}</span>`}${P.gr&&!mc(m).c?` <span class="chip">গ্রেড ${P.gr}</span>`:''}<div class="mu">অ্যালাইনমেন্ট ${ag}/5 · HTF ${P.htf.toFixed(1)}</div></div><div style="display:flex;gap:3px">${TFS.map(t=>`<span title="${t}" style="width:24px;text-align:center;font-size:10px;padding:3px 0;border-radius:4px;background:${tc(T[t].sig)};color:#10141c">${t}</span>`).join('')}</div></div>`}).join('')+'</div>'}
+function flip(m){const T=D[m],P=plan[m];if(!T||!P||P.sig=='NO')return'';const d=P.sig=='BUY'?-1:1,nm=d>0?'BUY':'SELL',bl=d>0?'বুলিশ':'বেয়ারিশ',mid=(T['1h'].sc*2+T['15m'].sc)/3;
+const ck=[['৪ঘণ্টা+দৈনিক HTF '+bl+' (স্কোর '+(d>0?'+':'−')+'১ বা বেশি) — এখন '+P.htf.toFixed(2),P.htf*d>=1],['১ঘণ্টা/১৫মি মিশ্র স্কোর '+(d>0?'+':'−')+'১.৫ বা বেশি — এখন '+mid.toFixed(2),mid*d>=1.5],['১ঘণ্টায় '+bl+' CHoCH (স্ট্রাকচার বদল)',T['1h'].ch==d]];
+const ok=ck.filter(x=>x[1]).length;
+return`<div class="card"><b>${nm} সিগন্যাল কেন আসছে না?</b><div class="mu" style="margin:4px 0 6px">HTF-এর বিপরীতে ${nm} দিতে নিচের শর্ত লাগে (${ok}/${ck.length} পূরণ)। বাজারের মূল ট্রেন্ড উল্টো হলে অ্যাপ ইচ্ছে করেই কাউন্টার-ট্রেন্ড সিগন্যাল দেয় না।</div>${ck.map(x=>`<div class="${x[1]?'up':'dn'}">${x[1]?'✓':'✗'} <span style="color:var(--tx)">${x[0]}</span></div>`).join('')}</div>`}
+function mc(m){if(m!='XAU')return{c:0};const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',hourCycle:'h23',weekday:'short',hour:'numeric',minute:'numeric'}).formatToParts(new Date()).map(x=>[x.type,x.value])),dw={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[p.weekday],mi=+p.hour*60+ +p.minute,t=dw*1440+mi;let rem=0,why='';
+if(t>=5*1440+1020){rem=7*1440+1020-t;why='সপ্তাহান্তে বন্ধ'}else if(dw==0&&mi<1020){rem=1020-mi;why='সপ্তাহান্তে বন্ধ'}else if(dw>=1&&dw<=4&&mi>=1020&&mi<1080){rem=1080-mi;why='ডেইলি ব্রেক'}
+if(!rem)return{c:0};const at=new Date(Date.now()+rem*6e4),hh=Math.floor(rem/60),mm=rem%60,bn=x=>x.toLocaleString('bn-BD'),ts=at.toLocaleString('bn-BD',{weekday:'short',hour:'2-digit',minute:'2-digit'});
+return{c:1,why,msg:why+' · খুলবে '+ts+' ('+(hh?bn(hh)+' ঘণ্টা ':'')+bn(mm)+' মিনিট পরে)'}}
+function closedCard(m){const k=mc(m);return`<div class="card" style="border-color:var(--sell)"><div class="mu">${IN[m].n} — মার্কেট স্ট্যাটাস</div><div class="big" style="color:var(--sell)">🔒 MARKET CLOSED</div><div class="mu" style="margin-top:6px">${k.msg}</div><div class="mu" style="margin-top:6px">মার্কেট বন্ধ থাকায় নতুন সিগন্যাল, এন্ট্রি ও অ্যালার্ট বন্ধ। সময় নিউ ইয়র্ক ঘড়ি (শুক্র ৫টা – রবি ৫টা) অনুযায়ী; ব্রোকারভেদে কয়েক মিনিট/ঘণ্টা তফাত হতে পারে।</div><div class="mu" style="margin-top:6px">সর্বশেষ দাম: ${f(m,LP[m])}</div></div>`}
+function parts(X){const L=[['EMA ট্রেন্ড (50/200)','trend'],['স্ট্রাকচার (HH/HL, LH/LL)','st'],['BOS','bos'],['CHoCH','ch'],['FVG','fvg'],['Liquidity sweep','sweep'],['Order Block zone','zone'],['Support/Resistance','sr'],['RSI চরম','rsi']],q=X.parts;
+return`<div class="card"><b>স্কোর ভাঙা (${tf}) = ${X.sc.toFixed(1)} → ${sn(X.sig)}</b><div class="mu" style="margin:4px 0 6px">BUY ≥ +৩, SELL ≤ −৩, মাঝে NO TRADE</div>${L.map(([n,k])=>`<div style="display:flex;justify-content:space-between"><span>${n}</span><span class="${q[k]>0?'up':q[k]<0?'dn':'mu'}">${q[k]>0?'+':''}${q[k]}</span></div>`).join('')}</div>`}
+const AIP={gemini:{n:'Google Gemini',m:'gemini-2.5-flash',u:'aistudio.google.com/apikey',ph:'AIza...',x:'ফ্রি, কার্ড লাগে না। আনুমানিক ~১০ রিকোয়েস্ট/মিনিট ও ~৫০০/দিন (গুগল বদলাতে পারে)।'},cerebras:{n:'Cerebras',m:'gpt-oss-120b',u:'cloud.cerebras.ai',ph:'csk-...',b:'https://api.cerebras.ai/v1',x:'ফ্রি, কার্ড লাগে না। আনুমানিক ~১০ লাখ টোকেন/দিন; মিনিটের সীমা মডেলভেদে কম (সূত্রে ৫–৩০ রিকোয়েস্ট/মিনিট)। মডেলের সঠিক নাম (যেমন Qwen3 235B) Cerebras ড্যাশবোর্ডের মডেল তালিকা থেকে কপি করে নিচের মডেল ঘরে বসান।'},groq:{n:'Groq (gpt-oss)',m:'openai/gpt-oss-120b',u:'console.groq.com/keys',ph:'gsk_...',b:'https://api.groq.com/openai/v1',x:'ফ্রি, কার্ড লাগে না। লিমিট: ৩০ রিকোয়েস্ট/মিনিট, ১,০০০/দিন, ৮,০০০ টোকেন/মিনিট। পরপর দ্রুত প্রশ্ন করলে ১ মিনিট অপেক্ষা লাগতে পারে।'},openrouter:{n:'OpenRouter',m:'meta-llama/llama-3.3-70b-instruct:free',u:'openrouter.ai/keys',ph:'sk-or-v1-...',b:'https://openrouter.ai/api/v1',x:'শুধু ":free" মডেল ফ্রি; দৈনিক সীমা কম (আনুমানিক ~২০০/দিন)। ফ্রি মডেলের তালিকা বদলায়, না চললে openrouter.ai/models?q=free থেকে অন্য মডেলের নাম বসান।'},custom:{n:'কাস্টম (OpenAI-সামঞ্জস্যপূর্ণ)',m:'',u:'আপনার সার্ভিসের ডকুমেন্টেশন',ph:'key (থাকলে)',x:'যেকোনো OpenAI-সামঞ্জস্যপূর্ণ সার্ভিস (Mistral, NVIDIA NIM, GitHub Models, Together, নিজের সার্ভার ইত্যাদি)। নিচে Base URL (যেমন https://api.mistral.ai/v1) ও মডেলের নাম দিন। শুধু https:// বা localhost গ্রহণযোগ্য; key লাগলে দিন, না লাগলে ফাঁকা রাখুন।'},claude:{n:'Claude (Anthropic)',m:'claude-sonnet-5-5',u:'console.anthropic.com',ph:'sk-ant-...',x:'পেইড — আগে ক্রেডিট কিনতে হয়। মডেল: claude-haiku-5-5 সস্তা, claude-opus-5-5 সবচেয়ে সক্ষম।'}};
+const aiPv=()=>LS('gb_aip')||'gemini',aiKey=p=>((LS('gb_aiks')||{})[p]||''),aiModel=p=>{const v=(LS('gb_aims')||{})[p];return(v&&v!='llama-3.3-70b-versatile'&&v!='llama-3.1-8b-instant')?v:AIP[p].m};const aiBase=p=>p=='custom'?String((LS('gb_aibs')||{}).custom||'').trim().replace(/\/+$/,''):AIP[p].b,aiOn=p=>p=='custom'?!!(aiBase(p)&&aiModel(p)):!!aiKey(p);let AIH=[],AIB=0,AIG=0;
+const AISYS='তুমি এই ট্রেডিং অ্যাপের ভিতরের AI ট্রেড সহকারী। ব্যবহারকারী বাংলায় লেখে — বাংলায় উত্তর দাও (BUY, SELL, SL, TP, zone ইত্যাদি টেকনিক্যাল শব্দ ইংরেজিতে রাখো)। প্রতিটি বার্তার সঙ্গে LIVE_DATA নামে অ্যাপের লাইভ বিশ্লেষণ ও সাম্প্রতিক ক্যান্ডেল ডাটা (JSON) দেওয়া থাকে। শুধু ওই ডাটা ব্যবহার করো, নিজে থেকে দাম বা তথ্য বানাবে না। বাই/সেল সংক্রান্ত প্রশ্নে শুরুতেই স্পষ্ট করে বলো: BUY / SELL / WAIT। তারপর entry zone (lo–hi), stop loss, TP1/TP2 (ডাটায় থাকলে) এবং ২–৪টি সংক্ষিপ্ত কারণ। দাম zone-এ না থাকলে বলো limit-এর জন্য অপেক্ষা করতে হবে এবং দাম কোন দিকে গেলে zone-এ আসবে। market_closed true হলে নতুন এন্ট্রি দেবে না। উত্তর সংক্ষিপ্ত রাখো (বিস্তারিত না চাইলে প্রায় ১৫০ শব্দের মধ্যে)। entry zone শুধু entry_plan.zone থেকে নেবে। entry_plan.zone null হলে এবং too_far_zone থাকলে বলো: কাছাকাছি কোনো zone নেই, নিকটতম zone কত % দূরে, তাই WAIT — এত দূরের zone-এ limit বসাতে বলবে না। দাম থেকে max_entry_distance-এর বেশি দূরের কোনো লেভেলকে entry হিসেবে দেবে না। লাভের নিশ্চয়তা দেবে না; SL ও ঝুঁকির কথা মনে করিয়ে দাও। Markdown হেডিং ব্যবহার করবে না।';
+const md=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
+function aiPost(role,text){const L=$('#aiLog');if(!L)return null;const u=role=='user',d=document.createElement('div');d.style.cssText='margin:6px 0;padding:8px 10px;border-radius:10px;max-width:94%;font-size:14px;'+(u?'margin-left:auto;background:#2a3342':'background:#1f2735;border:1px solid var(--ln)');d.innerHTML=md(text);L.appendChild(d);L.scrollTop=L.scrollHeight;return d}
+function aiMode(){const p=aiPv(),e=$('#aiMode');if(e)e.textContent=aiOn(p)?AIP[p].n.split(' (')[0]+' · '+aiModel(p):'বিল্ট-ইন বিশ্লেষক'}
+function aiCtx(){const m=inst,T=D[m],P=plan[m];if(!T||!P)return null;advice(m);const X=T[tf],d=IN[m].d,r=v=>+(+v).toFixed(d),A=ADV[m]||{},lp=LP[m]||T['5m'].px,nr=z=>Math.min(Math.abs(z.lo-lp),Math.abs(z.hi-lp))<=6*X.a,bk=[...X.k.slice(X.fc?-39:-40),...(X.fc&&X.lv?[...(X.ex||[]),X.lv]:[])].map(k=>[k.t,r(k.o),r(k.h),r(k.l),r(k.c)]);
+return{symbol:IN[m].n,data_source:SN(srcOf(IN[m].s)),viewed_timeframe:tf,live_price:r(lp),market_closed:!!mc(m).c,local_time:new Date().toString().slice(0,24),
+overall:{signal:P.sig,grade:P.gr||null,htf_score:+P.htf.toFixed(2)},
+timeframes:TFS.map(t=>{const x=T[t];return{tf:t,signal:x.sig,score:+x.sc.toFixed(1),ema_trend:lab[x.trend],structure:lab[x.st],bos:x.bos,choch:x.ch,rsi:Math.round(x.r),atr:r(x.a)}}),
+entry_plan:A.sig&&A.sig!='NO'?{direction:A.sig,mode:A.mode,entry:A.mode=='far'?null:r(A.ent),stop_loss:A.mode=='far'?null:r(A.sl),tp1:A.mode=='far'?null:r(A.t1),tp2:A.mode=='far'?null:r(A.t2),zone:A.zn?{lo:r(A.zn.lo),hi:r(A.zn.hi),type:A.zn.t}:null,checks_passed:A.n+'/8',checks:A.ck,verdict:A.v,too_far_zone:A.far?{lo:r(A.far.lo),hi:r(A.far.hi),type:A.far.t,distance_pct:A.far.pct}:null,max_entry_distance:r(5*T['1h'].a)}:{direction:'NONE'},
+levels:{support:X.sr.s.filter(nr).slice(0,3).map(z=>[r(z.lo),r(z.hi),z.n]),resistance:X.sr.r.filter(nr).slice(0,3).map(z=>[r(z.lo),r(z.hi),z.n]),fvg:X.fg.filter(nr).map(q=>({dir:q.d>0?'bull':'bear',lo:r(q.lo),hi:r(q.hi)})),demand:X.dem&&nr(X.dem)?[r(X.dem.lo),r(X.dem.hi)]:null,supply:X.sup&&nr(X.sup)?[r(X.sup.lo),r(X.sup.hi)]:null,bsl:X.bsl?r(X.bsl):null,ssl:X.ssl?r(X.ssl):null},
+candles:{tf,format:'[unix_time,open,high,low,close]',last_is_live_forming:!!X.fc,data:bk}}}
+function aiLocal(q,m,nr){m=m||inst;const T=D[m],P=plan[m];if(!T||!P)return'ডাটা এখনও লোড হয়নি — কয়েক সেকেন্ড পরে আবার জিজ্ঞাসা করুন।';if(!nr)advice(m);
+const A=ADV[m]||{sig:'NO'},lp=LP[m]||T['5m'].px,F=v=>f(m,v),fd=v=>(+v).toFixed(IN[m].d),s=(q||'').toLowerCase(),has=r=>r.test(s),nm=IN[m].n;
+if(mc(m).c)return'🔒 **'+nm+'** এখন মার্কেট বন্ধ — '+mc(m).msg+'।\nনতুন BUY/SELL এন্ট্রি নেই। মার্কেট খুললে আবার জিজ্ঞাসা করুন।';
+const head='📊 **'+nm+'** · লাইভ '+F(lp)+' · সামগ্রিক সিগন্যাল: **'+P.sig+(P.gr?' (গ্রেড '+P.gr+')':'')+'**',up=A.sig=='BUY',trade=A.sig=='BUY'||A.sig=='SELL';
+const tfl=TFS.map(t=>t+': '+sn(T[t].sig)+' ('+T[t].sc.toFixed(1)+')').join(' · ');
+const pos=!trade||!A.zn?'':(A.mode=='now'||A.mode=='caution')?'দাম এখন '+A.sig+' zone-এর ভিতরে আছে।':up?(lp>A.zn.hi?'দাম zone-এর ওপরে — আরও '+fd(lp-A.zn.hi)+' নিচে নামলে zone-এ আসবে, তখন BUY লিমিট।':'দাম zone-এর কাছে।'):(lp<A.zn.lo?'দাম zone-এর নিচে — আরও '+fd(A.zn.lo-lp)+' ওপরে উঠলে zone-এ আসবে, তখন SELL লিমিট।':'দাম zone-এর কাছে।');
+const R=trade?Math.abs(A.ent-A.sl):0,lv=trade&&A.mode!='far'?'**'+A.sig+'** Entry '+F(A.ent)+' · SL '+F(A.sl)+' · TP1 '+F(A.t1)+' · TP2 '+F(A.t2)+'\nSL দূরত্ব: '+fd(R)+' (TP1 = 1:'+(Math.abs(A.t1-A.ent)/R).toFixed(1)+')':'';
+const zl=trade&&A.zn?'**'+A.sig+' ENTRY ZONE:** '+F(A.zn.lo)+' – '+F(A.zn.hi)+' ('+A.zn.t+')':trade?(A.far?'কাছাকাছি '+A.sig+' zone নেই — নিকটতম '+F(A.far.lo)+' – '+F(A.far.hi)+' ('+A.far.t+') দাম থেকে '+A.far.pct+'% দূরে। এখন এন্ট্রি নয়, অপেক্ষা করুন।':'স্পষ্ট zone নেই — '+A.sig+' দিক ঠিক, কিন্তু ছোট সাইজে বা অপেক্ষা।'):'';
+const why=trade?A.ck.map(x=>(x.ok?'✓ ':'✗ ')+x.t).join('\n'):'টাইমফ্রেমগুলো একমত নয় বা HTF বায়াস দুর্বল।\n'+tfl;
+const tm=s.match(/\b(5m|15m|1h|4h|1d)\b/),tfb=tm?(()=>{const x=T[tm[1]];return '**'+tm[1]+'**: '+sn(x.sig)+' · স্কোর '+x.sc.toFixed(1)+' · EMA '+lab[x.trend]+' · স্ট্রাকচার '+lab[x.st]+' · BOS '+(x.bos?(x.bos>0?'↑':'↓'):'নেই')+' · CHoCH '+(x.ch?(x.ch>0?'↑':'↓'):'নেই')+' · RSI '+x.r.toFixed(0)})():'';
+const end='\n\n(নিয়মভিত্তিক বিশ্লেষণ — নিশ্চিত সিগন্যাল নয়, SL মানুন।)';let o;
+if(tfb)o=head+'\n'+tfb;
+else if(has(/sl|tp|stop|টার্গেট|স্টপ|লস|টেক/))o=trade?head+'\n'+lv:head+'\nএখন কোনো এন্ট্রি প্ল্যান নেই (NO TRADE), তাই SL/TP নেই।';
+else if(has(/entry|এন্ট্রি|কোথায়|zone|জোন|কত দামে|কোন দামে/))o=trade?head+'\n'+zl+'\n'+pos+'\n'+lv:head+'\nএখন এন্ট্রি নয় (WAIT)। '+tfl;
+else if(has(/কেন|কারণ|why|reason|ব্যাখ্যা|বিশ্লেষণ/))o=head+'\n'+why+(trade?'\n'+A.n+'/8 শর্ত পূরণ।':'');
+else if(has(/ঝুঁকি|risk|রিস্ক|লট|lot|সাইজ/))o=head+'\n'+(trade?'এই ট্রেডে SL দূরত্ব '+fd(R)+'। ':'')+'প্রতি ট্রেডে ব্যালেন্সের ১–২%-এর বেশি ঝুঁকি নেবেন না। লট বের করতে ক্যালকুলেটর ট্যাবে ব্যালেন্স ও ঝুঁকি % দিন। TP1-এ অর্ধেক বন্ধ করে SL ব্রেকইভেনে নিন। ডেইলি লস সীমা পার হলে ট্রেড বন্ধ রাখুন।';
+else o=head+'\n'+(trade?'👉 '+A.v+'\n'+zl+'\n'+pos+'\n'+lv+'\n'+A.n+'/8 শর্ত পূরণ — "কেন?" লিখলে কারণ দেখাব।':'👉 এখন এন্ট্রি নয় (**WAIT**)।\n'+why);
+return o+end}
+async function aiCall(p,key,mdl,ctx,q,slim){if(slim&&ctx.candles&&ctx.candles.data)ctx=Object.assign({},ctx,{candles:Object.assign({},ctx.candles,{data:ctx.candles.data.slice(-20)})});const U='LIVE_DATA:\n'+JSON.stringify(ctx)+'\n\nপ্রশ্ন: '+q,H=slim?[]:AIH.slice(p=='groq'?-4:-8).map(x=>p=='groq'?{role:x.role,content:String(x.content).slice(0,500)}:x);let r,j,txt;
+if(p=='claude'){r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:mdl,max_tokens:1000,system:AISYS,messages:[...H,{role:'user',content:U}]})});j=await r.json();if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));txt=(j.content||[]).filter(b=>b.type=='text').map(b=>b.text).join('\n')}
+else if(p=='gemini'){r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(mdl)+':generateContent',{method:'POST',headers:{'content-type':'application/json','x-goog-api-key':key},body:JSON.stringify({systemInstruction:{parts:[{text:AISYS}]},contents:[...H.map(x=>({role:x.role=='user'?'user':'model',parts:[{text:x.content}]})),{role:'user',parts:[{text:U}]}],generationConfig:Object.assign({maxOutputTokens:1500,temperature:.4},/pro/.test(mdl)?{}:{thinkingConfig:{thinkingBudget:0}})})});j=await r.json();if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));txt=(((j.candidates||[])[0]||{}).content&&(j.candidates[0].content.parts||[]).map(x=>x.text||'').join('\n'))||''}
+else{const base=aiBase(p);if(!/^https:\/\/|^http:\/\/(localhost|127\.0\.0\.1)/i.test(base))throw new Error('Base URL ঠিক নেই — https:// দিয়ে শুরু হতে হবে');if(!mdl)throw new Error('মডেলের নাম দিন');r=await fetch(base+'/chat/completions',{method:'POST',headers:Object.assign({'content-type':'application/json'},key?{authorization:'Bearer '+key}:{}),body:JSON.stringify(Object.assign({model:mdl,max_tokens:p=='groq'?1000:1500,temperature:.4,messages:[{role:'system',content:AISYS},...H,{role:'user',content:U}]},(p=='groq'||p=='cerebras')&&/gpt-oss/i.test(mdl)?{reasoning_effort:'low'}:{}))});j=await r.json();if(!r.ok)throw new Error(j.error&&(j.error.message||JSON.stringify(j.error))||('HTTP '+r.status));txt=((j.choices||[])[0]||{}).message?j.choices[0].message.content:''}
+return String(txt||'').trim()||'(খালি উত্তর)'}
+async function aiAsk(q){q=(q||$('#aiIn').value||'').trim();if(!q||AIB)return;$('#aiIn').value='';aiPost('user',q);const p=aiPv(),key=aiKey(p);
+if(!aiOn(p)){aiPost('assistant',aiLocal(q));return}
+AIB=1;const w=aiPost('assistant','⏳ চার্ট বিশ্লেষণ করছি…');
+try{const ctx=aiCtx();if(!ctx)throw new Error('ডাটা এখনও লোড হয়নি');let txt;try{txt=await aiCall(p,key,aiModel(p),ctx,q)}catch(e1){if(/too large|reduce your message/i.test(String(e1&&e1.message))){w.innerHTML='⏳ অনুরোধ বড় ছিল — ছোট করে আবার পাঠাচ্ছি…';txt=await aiCall(p,key,aiModel(p),ctx,q,1)}else throw e1}w.innerHTML=md(txt);AIH.push({role:'user',content:q},{role:'assistant',content:txt});if(AIH.length>16)AIH=AIH.slice(-16)}
+catch(e){let m=e&&e.message||String(e);if(/model.*(not exist|decommission|deprecat|not found|no access)|do not have access/i.test(m))m='এই মডেলটি আর নেই বা আপনার অ্যাক্সেস নেই — ⚙ AI সেটিংসে মডেলের নাম বদলান'+(p=='groq'?' (যেমন openai/gpt-oss-120b)':'')+' ('+m.slice(0,90)+')';else if(/429|quota|rate|limit/i.test(m)){const t=m.match(/try again in ([0-9.]+)\s*(ms|s|m)\b/i);m='ফ্রি লিমিট'+(p=='groq'?' (মিনিটে ৮০০০ টোকেন)':'')+' — '+(t?'প্রায় '+Math.max(1,Math.ceil(parseFloat(t[1])*(t[2]=='m'?60:t[2]=='ms'?.001:1)))+' সেকেন্ড পরে':'কিছুক্ষণ পরে')+' আবার চেষ্টা করুন'}else if(e&&e.name=='TypeError')m='নেটওয়ার্ক/ব্রাউজার ব্লক ('+m+') — ইন্টারনেট ও key দেখুন';w.innerHTML=md('⚠ '+AIP[p].n+' ত্রুটি: '+m+'\n\nবিল্ট-ইন বিশ্লেষণ:\n'+aiLocal(q))}
+AIB=0;const L=$('#aiLog');if(L)L.scrollTop=L.scrollHeight}
+function render(){
+$('#px').innerHTML=Object.keys(IN).map(m=>{const T=D[m];if(!T)return'';const c=chgOf(m);return`<button data-i="${m}" class="${m==inst?'on':''}"><span class="mu">${IN[m].n}</span><b>${f(m,LP[m]||T['5m'].px)}</b>${mc(m).c?'<span class="mu">🔒 বন্ধ</span>':`<span class="${c>=0?'up':'dn'}">${c>=0?'▲':'▼'} ${c.toFixed(2)}% আজ</span>`}</button>`}).join('');
+const T=D[inst],P=plan[inst];if(!T||!P)return;const X=T[tf];
+let h=dash()+flip(inst)+`<div class="card"><div class="mu">${IN[inst].n} — মাল্টি-টাইমফ্রেম সিগন্যাল</div><div class="big ${P.sig}">${sn(P.sig)}${P.gr?` <span class="chip" style="font-size:13px;vertical-align:middle">গ্রেড ${P.gr}</span>`:''}</div><div class="mu">স্কোর ${P.w.toFixed(2)} · HTF (4h+1d) ${P.htf.toFixed(2)}</div>
+${P.sig!='NO'?`${P.gr!='A'?`<div class="mu" style="margin-top:6px">${P.why[0]}</div>`:''}<div class="kv" style="margin-top:8px"><div><span class="mu">Entry</span>${f(inst,P.px)}</div><div><span class="mu">Stop Loss</span><span class="dn">${f(inst,P.sl)}</span></div><div><span class="mu">TP1 (1:${(Math.abs(P.t1-P.px)/Math.abs(P.px-P.sl)).toFixed(1)})</span><span class="up">${f(inst,P.t1)}</span></div><div><span class="mu">TP2 (1:${(Math.abs(P.t2-P.px)/Math.abs(P.px-P.sl)).toFixed(1)})</span><span class="up">${f(inst,P.t2)}</span></div></div>`:`<div class="mu" style="margin-top:6px">${P.why[0]}</div>${P.ref?`<div class="mu" style="margin-top:6px">রেফারেন্স ${P.ad>0?'BUY':'SELL'} (সিগন্যাল নয়): Entry ${f(inst,P.px)} · SL ${f(inst,P.sl)} · TP1 ${f(inst,P.t1)}</div>`:''}`}${newsRisk()}</div>
+<table><tr><th>TF</th><th>সিগন্যাল</th><th>ট্রেন্ড</th><th>স্কোর</th></tr>${TFS.map(t=>`<tr class="t ${t==tf?'on':''}" data-f="${t}"><td>${t}</td><td><span class="chip ${T[t].sig}">${sn(T[t].sig)}</span></td><td>${lab[T[t].trend]}</td><td>${T[t].sc.toFixed(1)}</td></tr>`).join('')}</table>
+<h2>লাইভ চার্ট — ${tf}</h2>${lyBar(X)}<div class="card" style="padding:6px"><canvas id="ch"></canvas><div class="mu">চিপে ট্যাপ করলে ওই লেয়ার চার্টে চালু/বন্ধ হবে। সংখ্যা = এই টাইমফ্রেমের স্কোরে তার অবদান। শেষ ক্যান্ডেল লাইভ দামে ওঠানামা করে।</div></div></div><!--AI--><div id="adv">${advice()}</div>
+<h2>বিস্তারিত — ${tf}</h2>${parts(X)}<div class="card"><div class="kv">
+<div><span class="mu">Structure</span>${lab[X.st]}${X.bos?' · BOS'+(X.bos>0?'↑':'↓'):''}${X.ch?' · CHoCH'+(X.ch>0?'↑':'↓'):''}</div>
+<div><span class="mu">RSI(14)</span>${X.r.toFixed(0)}</div>
+<div><span class="mu">Buy-side Liquidity (BSL)</span>${f(inst,X.bsl)}</div>
+<div><span class="mu">Sell-side Liquidity (SSL)</span>${f(inst,X.ssl)}</div>
+<div><span class="mu">Liquidity Sweep</span>${X.sw>0?'SSL sweep → বুলিশ':X.sw<0?'BSL sweep → বেয়ারিশ':'নেই'}</div>
+<div><span class="mu">ATR</span>${f(inst,X.a)}</div>
+<div><span class="mu">Demand Zone</span>${X.dem?f(inst,X.dem.lo)+' – '+f(inst,X.dem.hi):'—'}</div>
+<div><span class="mu">Supply Zone</span>${X.sup?f(inst,X.sup.lo)+' – '+f(inst,X.sup.hi):'—'}</div>
+<div><span class="mu">S/R স্কোর প্রভাব</span>${X.srs>0?'<span class="up">Support-এ +'+X.srs+'</span>':X.srs<0?'<span class="dn">Resistance-এ '+X.srs+'</span>':'নেই (zone থেকে দূরে)'}</div></div>
+<div style="margin-top:8px"><span class="mu">অপূর্ণ FVG (Fair Value Gap)</span>${X.fg.length?X.fg.map(g=>`<div><span class="${g.d>0?'up':'dn'}">${g.d>0?'Bullish':'Bearish'}</span> ${f(inst,g.lo)} – ${f(inst,g.hi)}</div>`).join(''):'<div>নেই</div>'}</div></div>`;
+if(mc(inst).c){const ix=h.indexOf('<table><tr><th>TF');h=dash()+closedCard(inst)+(ix>=0?h.slice(ix):'')}
+h+=srHtml(X)+keyLevels(T);{const q=h.split('<!--AI-->');$('#a1').innerHTML=q[0];$('#a3').innerHTML=q[1]||'';if(!AIG){AIG=1;aiPost('assistant','আসসালামু আলাইকুম! আমি আপনার ট্রেড সহকারী। চার্ট দেখে **BUY/SELL**, entry zone, SL/TP আর কারণ বলতে পারি। নিচের বাটনে ট্যাপ করুন বা নিজের প্রশ্ন লিখুন।'+(aiOn(aiPv())?'':'\n\n(এখন বিল্ট-ইন মোডে চলছে। নিচের ⚙ সেটিংসে ফ্রি Gemini বা Groq key দিলে যেকোনো প্রশ্ন স্বাধীনভাবে করতে পারবেন।)'))}}drawChart();fillCalc(false)}
+function zr(m,z,px){const d=Math.abs((z.lo+z.hi)/2-px)/px*100,s=z.n>=4?'শক্তিশালী':z.n==3?'মাঝারি':'দুর্বল';return`<div>${f(m,z.lo)} – ${f(m,z.hi)} <span class="mu">· ${z.n}বার টাচ · ${s} · ${d.toFixed(2)}% দূরে</span></div>`}
+function srHtml(X){const m=inst,r=X.sr.r.slice().reverse(),s=X.sr.s,e='<div class="mu">নেই</div>';
+return`<h2>Support / Resistance Zone — ${tf}</h2><div class="card"><b class="dn">Resistance</b>${r.length?r.map(z=>zr(m,z,X.px)).join(''):e}<div style="margin:8px 0;border-top:1px dashed var(--ac);color:var(--ac)">বর্তমান দাম ${f(m,X.px)}</div><b class="up">Support</b>${s.length?s.map(z=>zr(m,z,X.px)).join(''):e}</div>`}
+function keyLevels(T){const m=inst,P=plan[m],z=x=>x?f(m,x.lo)+' – '+f(m,x.hi):'—';
+const rows=['1h','4h','1d'].map(t=>`<tr><td>${t}</td><td class="up">${z(T[t].sr.s[0])}</td><td class="dn">${z(T[t].sr.r[0])}</td></tr>`).join('');
+const R=T['4h'].sr.r[0],S=T['4h'].sr.s[0];let w='';
+if(P.sig=='BUY'&&R&&P.t1>R.lo)w=`<div class="card warn">⚠ TP1 (${f(m,P.t1)}) ৪ঘণ্টার Resistance (${z(R)}) পার করছে — আগেই আংশিক প্রফিট নিন</div>`;
+if(P.sig=='SELL'&&S&&P.t1<S.hi)w=`<div class="card warn">⚠ TP1 (${f(m,P.t1)}) ৪ঘণ্টার Support (${z(S)}) পার করছে — আগেই আংশিক প্রফিট নিন</div>`;
+return`<h2>প্রধান লেভেল (নিকটতম)</h2><table><tr><th>TF</th><th>Support</th><th>Resistance</th></tr>${rows}</table>${w}`}
+const LYD={ema:1,st:1,bos:1,ch:1,fvg:1,sw:1,ob:1,sr:1,rsi:1};let LYS=null;const gly=()=>LYS||(LYS=Object.assign({},LYD,LS('gb_ly')||{}));
+const LYI=[['ema','EMA ট্রেন্ড','#4fc3f7','trend'],['st','স্ট্রাকচার','#e8ecf3','st'],['bos','BOS','#e0b34a','bos'],['ch','CHoCH','#ffb300','ch'],['fvg','FVG','#2fbf71','fvg'],['sw','Liquidity sweep','#b388ff','sweep'],['ob','Order Block zone','#508cff','zone'],['sr','Support/Resistance','#c9a227','sr'],['rsi','RSI চরম','#f48fb1','rsi']];
+function lyState(k,X){switch(k){case'ema':return lab[X.trend];case'st':return lab[X.st];case'bos':return X.bos?'BOS'+(X.bos>0?' ↑ বুলিশ':' ↓ বেয়ারিশ'):'নেই';case'ch':return X.ch?'CHoCH'+(X.ch>0?' ↑ বুলিশ':' ↓ বেয়ারিশ'):'নেই';case'fvg':return X.fg.length?X.fg.length+'টি অপূর্ণ':'নেই';case'sw':return X.sw>0?'SSL sweep ↑ (বুলিশ)':X.sw<0?'BSL sweep ↓ (বেয়ারিশ)':'নেই';case'ob':return X.zin>0?'Demand zone-এ':X.zin<0?'Supply zone-এ':(X.dem||X.sup?'zone আছে, দাম বাইরে':'নেই');case'sr':return X.srs>0?'Support-এর কাছে':X.srs<0?'Resistance-এর কাছে':'zone থেকে দূরে';case'rsi':return X.r.toFixed(0)+(X.r>70?' · ওভারবট':X.r<30?' · ওভারসোল্ড':' · স্বাভাবিক')}return''}
+function lyBar(X){const L=gly();return`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;margin:6px 0">${LYI.map(([k,n,c,pk])=>{const v=X.parts[pk],st=lyState(k,X);return`<button data-ly="${k}" onclick="togLy('${k}')" style="text-align:left;background:var(--sf);color:var(--tx);border:2px solid ${c};border-radius:8px;padding:6px 9px;opacity:${L[k]?1:.4};cursor:pointer"><span style="font-size:14px;font-weight:700;color:${c}">${n}</span><span class="${v>0?'up':v<0?'dn':'mu'}" style="float:right;font-size:13px;font-weight:700">${v>0?'+':''}${v}</span><div style="font-size:12px;color:var(--mu);margin-top:2px">${st}</div></button>`}).join('')}</div>`}
+function togLy(k){const L=gly();L[k]=L[k]?0:1;LS('gb_ly',L);document.querySelectorAll('[data-ly="'+k+'"]').forEach(b=>b.style.opacity=L[k]?1:.4);drawChart()}
+const TVU='#089981',TVD='#f23645',TVBG='#131722',TVGR='#2a2e39',TVTX='#b2b5be';
+let LDT=0,LRT=0;function liveTick(){const n=Date.now();if(n-LDT<150)return;LDT=n;drawChart()}
+function liveC(m,t){const X=D[m]&&D[m][t];if(!X||!X.fc)return null;const P=TPd[t],now=Date.now()/1e3,p=LP[m];if(!X.ex)X.ex=[];if(!X.lv)X.lv={...X.fc};
+if(p>0&&!mc(m).c){let L=X.lv;if(now>=L.t+P){X.ex.push({...L});const nt=L.t+P*Math.floor((now-L.t)/P);X.lv={t:nt,o:L.c,h:Math.max(L.c,p),l:Math.min(L.c,p),c:p}}else{L.h=Math.max(L.h,p);L.l=Math.min(L.l,p);L.c=p}}
+if(X.ex.length&&now>X.fc.t+P+16&&Date.now()-LRT>20000){LRT=Date.now();load()}return X}
+const nice=(lo,hi,n)=>{const r=(hi-lo)/n,p=Math.pow(10,Math.floor(Math.log10(r))),q=r/p,s=(q<1.5?1:q<3.5?2:q<7.5?5:10)*p,a=[];for(let v=Math.ceil(lo/s)*s;v<=hi;v+=s)a.push(v);return a};
+function drawChart(){const cv=$('#ch');if(!cv||!D[inst])return;const m=inst,X=D[m][tf],LY=gly();liveC(m,tf);
+const W=cv.parentNode.clientWidth-12,H=500,dr=devicePixelRatio||1;cv.width=W*dr;cv.height=H*dr;cv.style.width=W+'px';cv.style.height=H+'px';
+const g=cv.getContext('2d');g.scale(dr,dr);g.fillStyle=TVBG;g.fillRect(0,0,W,H);
+const now=Date.now()/1e3,P=TPd[tf],clo=mc(m).c,ex=X.ex||[],A=X.fc&&X.lv?[...X.k,...ex,X.lv]:[...X.k],st0=Math.max(0,A.length-80),K=A.slice(st0).map(x=>({...x})),N=K.length,off=X.off+st0,ncl=Math.max(0,X.k.length-st0);
+const pr=78,ch=330,rh=92,tp=30,cw=(W-pr)/N,cs=getComputedStyle(document.documentElement),C=n=>cs.getPropertyValue(n).trim();
+let hi=Math.max(...K.map(x=>x.h)),lo=Math.min(...K.map(x=>x.l));const pd=(hi-lo)*.1||1;hi+=pd;lo-=pd;
+const AV=ADV[m]&&ADV[m].sig!='NO'?ADV[m]:null,lv=X.lv||K[N-1],px=lv.c,upc=lv.c>=lv.o?TVU:TVD;
+const Y=v=>tp+(hi-v)/(hi-lo)*ch,Xp=i=>(i-off)*cw+cw/2,fx=v=>(+v).toFixed(IN[m].d);
+/* গ্রিড + প্রাইস স্কেল (TradingView স্টাইল) */
+g.font='11px sans-serif';g.lineWidth=1;nice(lo,hi,8).forEach(v=>{const y=Math.round(Y(v))+.5;g.strokeStyle=TVGR;g.beginPath();g.moveTo(0,y);g.lineTo(W-pr,y);g.stroke();g.fillStyle=TVTX;g.fillText(fx(v),W-pr+6,y+4)});
+{const step=Math.max(1,Math.ceil(N/6));for(let q=Math.floor(step/2);q<N;q+=step){const x=Math.round(q*cw+cw/2)+.5,d=new Date(K[q].t*1e3);g.strokeStyle=TVGR;g.beginPath();g.moveTo(x,tp);g.lineTo(x,tp+ch);g.stroke();g.fillStyle=TVTX;const tx=tf=='1d'?d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}):(d.getHours()==0&&d.getMinutes()==0?d.toLocaleDateString('en-GB',{day:'numeric',month:'short'}):d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}));g.fillText(tx,Math.max(2,x-14),tp+ch+14)}}
+const LB=[],TG=[];const pill=(t,x,y,col,tc,pri)=>LB.push({t,x,y,col,tc,pri:pri||5});
+const zone=(i0,a,b,c,t,tc,rt,pri)=>{const x=Math.max(0,Xp(i0)),y0=Math.max(tp,Y(b)),y1=Math.min(tp+ch,Y(a));if(y1<=y0)return;g.fillStyle=c;g.fillRect(x,y0,W-pr-x,y1-y0);g.strokeStyle=tc;g.globalAlpha=.6;g.strokeRect(x+.5,y0+.5,W-pr-x-1,Math.max(1,y1-y0-1));g.globalAlpha=1;if(t)pill(t,rt?W:x+3,y0+2,tc,'#10141c',pri)};
+const ln=(v,c,t,d,w)=>{if(v>=lo&&v<=hi){g.strokeStyle=c;g.lineWidth=w||1;g.setLineDash(d?[6,4]:[]);g.beginPath();g.moveTo(0,Y(v));g.lineTo(W-pr,Y(v));g.stroke();g.setLineDash([]);g.lineWidth=1;TG.push({y:Y(v),t,v,c})}else if(t=='Entry'||t=='SL'||t=='TP1'||t=='TP2'){TG.push({y:v>hi?tp+8:tp+ch-8,t:t+(v>hi?' ↑':' ↓'),v,c,edge:1})}};
+const seg=(v,i0,i1,c,w)=>{const x0=Math.max(0,Xp(i0)),x1=Math.min(W-pr,Xp(i1));if(!(x1>x0)||v<lo||v>hi)return null;g.strokeStyle=c;g.lineWidth=w;g.beginPath();g.moveTo(x0,Y(v));g.lineTo(x1,Y(v));g.stroke();g.lineWidth=1;return[x0,x1]};
+/* জোন (ক্যান্ডেলের নিচে) */
+if(LY.sr){X.sr.s.slice(0,2).forEach(z=>zone(0,z.lo,z.hi,'rgba(201,162,39,.14)','SUPPORT'+(z.n>2?' ×'+z.n:''),'#c9a227',1,6));X.sr.r.slice(0,2).forEach(z=>zone(0,z.lo,z.hi,'rgba(201,162,39,.14)','RESISTANCE'+(z.n>2?' ×'+z.n:''),'#c9a227',1,6))}
+if(LY.fvg)X.fg.forEach(q=>zone(q.i-2,q.lo,q.hi,q.d>0?'rgba(8,153,129,.22)':'rgba(242,54,69,.22)','FVG '+(q.d>0?'↑':'↓'),q.d>0?TVU:TVD,0,5));
+if(LY.ob){if(X.dem)zone(X.dem.i-1,X.dem.lo,X.dem.hi,'rgba(80,140,255,.22)','DEMAND OB','#508cff',0,4);if(X.sup)zone(X.sup.i-1,X.sup.lo,X.sup.hi,'rgba(255,150,60,.22)','SUPPLY OB','#ff963c',0,4)}
+if(AV&&AV.zn){const sb=AV.sig=='BUY';zone(off,AV.zn.lo,AV.zn.hi,sb?'rgba(8,153,129,.24)':'rgba(242,54,69,.24)',AV.sig+' ENTRY ZONE '+(sb?'↑':'↓'),sb?TVU:TVD,0,3)}
+if(AV&&!AV.zn&&AV.ent>lo&&AV.ent<hi)pill(AV.sig+' ENTRY '+(AV.sig=='BUY'?'↑':'↓'),4,Y(AV.ent)-8,AV.sig=='BUY'?TVU:TVD,'#fff',3);
+if(LY.sw){if(X.bsl)ln(X.bsl,'#ef9a9a','BSL',1);if(X.ssl)ln(X.ssl,'#80cbc4','SSL',1)}
+/* ক্যান্ডেল (লাইভ ক্যান্ডেলসহ) */
+K.forEach((x,j)=>{const cx=Math.round(j*cw+cw/2)+.5,up=x.c>=x.o,col=up?TVU:TVD,bw=Math.max(1,Math.floor(cw*.72)),yt=Math.min(Y(x.o),Y(x.c)),bh=Math.max(1,Math.abs(Y(x.o)-Y(x.c)));g.strokeStyle=g.fillStyle=col;g.beginPath();g.moveTo(cx,Y(x.h));g.lineTo(cx,Y(x.l));g.stroke();g.fillRect(Math.round(cx-bw/2),Math.round(yt),bw,Math.round(bh))});
+/* EMA (লাইভ ক্যান্ডেল পর্যন্ত) */
+if(LY.ema){const exs=[...ex,...(X.lv?[X.lv]:[])],E=(s,n)=>{const kk=2/(n+1);let e=s[s.length-1];const o=[...s];exs.forEach(x=>{e=x.c*kk+e*(1-kk);o.push(e)});return o};
+[[E(X.e50s,50),'#4fc3f7','EMA50'],[E(X.e200s,200),'#ce93d8','EMA200']].forEach(([s,c,t])=>{g.strokeStyle=c;g.lineWidth=1.6;g.beginPath();let f0=1;s.forEach((v,j)=>{const i=X.off+j;if(i<off)return;const x=Xp(i);f0?(g.moveTo(x,Y(v)),f0=0):g.lineTo(x,Y(v))});g.stroke();g.lineWidth=1;const v=s[s.length-1];if(v>lo&&v<hi)pill(t,W,Y(v)-8,c,'#10141c',8)})}
+/* স্ট্রাকচার */
+if(LY.st){const pts=[...X.shi.map((s,q,a)=>({...s,h:1,t:q?(s.p>a[q-1].p?'HH':'LH'):''})),...X.sli.map((s,q,a)=>({...s,h:0,t:q?(s.p>a[q-1].p?'HL':'LL'):''}))].sort((a,b)=>a.i-b.i).filter(s=>s.i>=off&&s.p>lo&&s.p<hi);
+g.strokeStyle='rgba(232,236,243,.55)';g.lineWidth=1.4;g.beginPath();pts.forEach((s,q)=>{const x=Xp(s.i),y=Y(s.p);q?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();g.lineWidth=1;
+pts.forEach(s=>{const x=Xp(s.i),y=Y(s.p),up=s.t=='HH'||s.t=='HL',cl=s.t?(up?TVU:TVD):'#e8ecf3';g.fillStyle=cl;g.beginPath();g.arc(x,y,3.5,0,7);g.fill();if(s.t)pill(s.t,x-11,s.h?y-22:y+7,cl,'#fff',7)})}
+if(LY.bos&&X.bos&&X.bi!=null&&X.bl!=null){let br=-1;for(let q=Math.max(0,X.bi+1-off);q<ncl;q++)if(X.bos>0?K[q].c>X.bl:K[q].c<X.bl){br=q;break}
+if(br>=0){const r=seg(X.bl,X.bi,off+br,'#e0b34a',2.2);if(r)pill('BOS '+(X.bos>0?'↑':'↓'),(r[0]+r[1])/2-24,X.bos>0?Y(X.bl)-20:Y(X.bl)+5,'#e0b34a','#10141c',1)}}
+if(LY.ch&&X.ch&&X.chp!=null&&X.chI!=null){const r=seg(X.chp,X.chI,X.chJ,'#ffb300',2.2);if(r)pill('CHoCH '+(X.ch>0?'↑':'↓'),(r[0]+r[1])/2-28,X.ch>0?Y(X.chp)-20:Y(X.chp)+5,'#ffb300','#10141c',1)}
+if(LY.sw){const seen={};(X.swe||[]).forEach(e=>{const q=e.j-off,key=e.j+':'+e.d;if(q<0||q>=N||seen[key])return;seen[key]=1;seg(e.p,e.si,e.j,'#b388ff',1.4);const x=Xp(e.j),y=e.d<0?Y(K[q].h):Y(K[q].l);g.fillStyle='#b388ff';g.beginPath();g.arc(x,y,4.5,0,7);g.fill();pill(e.d<0?'SWEEP ↓ BSL':'SWEEP ↑ SSL',x-38,e.d<0?y-22:y+7,'#b388ff','#10141c',2)})}
+if(AV){ln(AV.ent,C('--tx'),'Entry',0,1.3);ln(AV.sl,TVD,'SL',0,1.3);ln(AV.t1,TVU,'TP1',0,1.3);ln(AV.t2,TVU,'TP2',0,1.3)}
+/* লেবেল: গুরুত্ব অনুযায়ী, একটার ওপর আরেকটা বসবে না */
+g.font='bold 11px sans-serif';{const R=[];LB.sort((a,b)=>a.pri-b.pri).forEach(b=>{const w=g.measureText(b.t).width+8,h=15,x=Math.max(2,Math.min(b.x,W-pr-w-2));for(const dy of[0,17,-17,34,-34]){const y=Math.max(tp+2,Math.min(b.y+dy,tp+ch-h-2));if(R.some(r=>x<r[0]+r[2]&&x+w>r[0]&&y<r[1]+r[3]&&y+h>r[1]))continue;R.push([x,y,w,h]);g.fillStyle=b.col;g.beginPath();if(g.roundRect)g.roundRect(x,y,w,h,3);else g.rect(x,y,w,h);g.fill();g.fillStyle=b.tc;g.fillText(b.t,x+4,y+11);break}})}
+/* লাইভ দাম: লাইন + ডান পাশে ট্যাগ + ক্যান্ডেল ক্লোজের কাউন্টডাউন */
+if(px>lo&&px<hi){g.strokeStyle=upc;g.setLineDash([2,3]);g.beginPath();g.moveTo(0,Y(px));g.lineTo(W-pr,Y(px));g.stroke();g.setLineDash([])}
+TG.push({y:Math.max(tp+8,Math.min(tp+ch-8,Y(px))),t:'',v:px,c:upc,live:1});
+{TG.sort((a,b)=>a.y-b.y);for(let q=1;q<TG.length;q++)if(TG[q].y-TG[q-1].y<16)TG[q].y=TG[q-1].y+16;
+TG.forEach(t=>{const h=t.live?32:15,y=t.y-8;g.fillStyle=t.c;g.fillRect(W-pr+1,y,pr-1,h);g.fillStyle=t.live||t.edge?'#fff':'#10141c';g.font='bold 11px sans-serif';
+if(t.live){g.fillText(fx(t.v),W-pr+5,y+13);let rem=Math.max(0,Math.floor((X.lv?X.lv.t+P:now)-now)),cd=clo?'CLOSED':(rem>=3600?Math.floor(rem/3600)+':'+String(Math.floor(rem%3600/60)).padStart(2,'0')+':'+String(rem%60).padStart(2,'0'):String(Math.floor(rem/60)).padStart(2,'0')+':'+String(rem%60).padStart(2,'0'));g.font='11px sans-serif';g.fillText(cd,W-pr+5,y+27)}
+else{const s=t.t+' '+fx(t.v);g.font='bold 10px sans-serif';g.fillText(g.measureText(s).width<pr-6?s:fx(t.v),W-pr+4,y+11)}})}
+/* TradingView-এর মতো OHLC লেজেন্ড */
+g.font='11px sans-serif';g.fillStyle=TVTX;g.fillText(IN[m].n+' · '+tf+' · '+SN(srcOf(IN[m].s)),6,tp+14);g.fillStyle=upc;g.fillText('O '+fx(lv.o)+'  H '+fx(lv.h)+'  L '+fx(lv.l)+'  C '+fx(lv.c),6,tp+28);
+/* RSI প্যানেল (লাইভ ক্যান্ডেলসহ) */
+if(LY.rsi){const y0=tp+ch+34,Yr=v=>y0+(100-v)/100*rh,exs=[...ex,...(X.lv?[X.lv]:[])];let rs=[...X.rs];if(X.cl&&exs.length){const cc=[...X.cl];exs.forEach(x=>{cc.push(x.c);rs.push(rsi(cc))})}
+g.fillStyle=TVBG;g.fillRect(0,y0-2,W,rh+4);g.fillStyle='rgba(242,54,69,.10)';g.fillRect(0,Yr(100),W-pr,Yr(70)-Yr(100));g.fillStyle='rgba(8,153,129,.10)';g.fillRect(0,Yr(30),W-pr,Yr(0)-Yr(30));g.strokeStyle=TVGR;[30,50,70].forEach(v=>{g.setLineDash([3,3]);g.beginPath();g.moveTo(0,Yr(v));g.lineTo(W-pr,Yr(v));g.stroke()});g.setLineDash([]);
+g.strokeStyle='#f48fb1';g.lineWidth=1.8;g.beginPath();let f0=1;rs.forEach((v,j)=>{const i=X.off+j;if(i<off)return;const x=Xp(i);f0?(g.moveTo(x,Yr(v)),f0=0):g.lineTo(x,Yr(v))});g.stroke();g.lineWidth=1;
+const rv=rs[rs.length-1],rc=rv>70?TVD:rv<30?TVU:'#f48fb1';g.font='bold 11px sans-serif';g.fillStyle=TVTX;g.fillText('RSI(14) — '+(rv>70?'ওভারবট (>70)':rv<30?'ওভারসোল্ড (<30)':'স্বাভাবিক'),6,y0+12);g.fillText('70',W-pr+6,Yr(70)+4);g.fillText('30',W-pr+6,Yr(30)+4);g.font='bold 13px sans-serif';g.fillStyle=rc;g.fillText(rv.toFixed(0),W-pr+30,Yr(rv)+4)}
+/* হেডার: সিগন্যাল স্ট্যাটাস */
+{const mo=AV?AV.mode:'no',tx=clo?'🔒 MARKET CLOSED':mo=='now'?'● ENTRY NOW — '+AV.sig:mo=='caution'?AV.sig+': zone-এ, কনফার্মেশন কম':mo=='wait'?AV.sig+': LIMIT-এর অপেক্ষা':'NO TRADE',col=clo?C('--sell'):mo=='now'?(AV.sig=='BUY'?TVU:TVD):C('--no');g.font='bold 13px sans-serif';g.fillStyle=col;g.fillText(tx,8,19)}}
+function advice(m){m=m||inst;const T=D[m],P=plan[m];if(!T||!P)return'';if(mc(m).c){ADV[m]={sig:'NO'};delete EN[m];return''}const px=LP[m]||T['5m'].px,X1=T['1h'],a=X1.a,d=P.sig=='BUY'?1:-1;
+const hd='<b>লাইভ এন্ট্রি বিশ্লেষণ</b> <span class="mu">(লাইভ দাম '+f(m,px)+')</span>';
+if(P.sig=='NO'){ADV[m]={sig:'NO'};delete EN[m]}if(P.sig=='NO')return`<div class="card">${hd}<div class="NO" style="font-size:20px;font-weight:700">এখন এন্ট্রি নয় (NO TRADE)</div><div class="mu">${TFS.map(t=>t+': '+sn(T[t].sig)).join(' · ')}</div><div>টাইমফ্রেমগুলো একমত নয় বা HTF বায়াস দুর্বল। পরিষ্কার সেটআপের জন্য অপেক্ষা করুন।</div></div>`;
+const c=[];if(d==1){if(X1.dem)c.push({lo:X1.dem.lo,hi:X1.dem.hi,t:'1h Demand'});X1.fg.filter(q=>q.d==1&&q.hi<=px+a*.3).forEach(q=>c.push({lo:q.lo,hi:q.hi,t:'1h Bullish FVG'}))}
+else{if(X1.sup)c.push({lo:X1.sup.lo,hi:X1.sup.hi,t:'1h Supply'});X1.fg.filter(q=>q.d==-1&&q.lo>=px-a*.3).forEach(q=>c.push({lo:q.lo,hi:q.hi,t:'1h Bearish FVG'}))}
+const cs=c.sort((x,y)=>d==1?y.hi-x.hi:x.lo-y.lo),dz=z=>d==1?px-z.hi:z.lo-px,zn=cs.find(z=>dz(z)<=a*5)||null,far=zn?null:(cs[0]||null),fp=far?Math.abs(dz(far))/px*100:0,inZ=zn&&px>=zn.lo-a*.2&&px<=zn.hi+a*.2;
+let ent=px;if(zn&&!inZ)ent=d==1?zn.hi:zn.lo;const q=setup(X1,d,ent,zn),sl=q.sl,t1=q.t1,t2=q.t2;
+const R=Math.abs(ent-sl),op=d==1?X1.sr.r[0]:X1.sr.s[0],T15=T['15m'];
+const ck=[['HTF (4h+1d) বায়াস পক্ষে',P.htf*d>0],['1h স্ট্রাকচার পক্ষে',X1.st==d],['15m BOS/CHoCH/ট্রেন্ড পক্ষে',T15.bos==d||T15.ch==d||T15.trend==d],['Liquidity sweep পক্ষে',[T['5m'],T15,X1].some(x=>x.sw==d)],['দাম এন্ট্রি zone-এ',!!inZ],['RSI(15m) চরম নয়',d==1?T15.r<70:T15.r>30],['বিপরীত S/R-এ পর্যাপ্ত জায়গা',!op||Math.abs((d==1?op.lo:op.hi)-ent)>=R*1.2],['বিপরীতমুখী CHoCH নেই (15m/1h)',T15.ch!=-d&&X1.ch!=-d]];
+const n=ck.filter(x=>x[1]).length;let v,ty;
+const go=!!(inZ&&dl()<2&&ck[7][1]&&(P.gr=='A'?n>=6:P.gr=='B'?n>=7:P.gr=='R'?n>=7:0));if(go){v=`✅ এখনই ${P.sig} এন্ট্রি নেওয়া যায়`;ty='Market'}
+else if(inZ){v=P.gr=='C'?'⚠ zone-এ আছে কিন্তু ১ঘণ্টা/১৫মি HTF-এর বিপরীতে — ১৫মি ক্যান্ডেল HTF দিকে ক্লোজ হওয়া পর্যন্ত অপেক্ষা':'⚠ zone-এ আছে, কনফার্মেশন কম — ছোট সাইজ বা ১৫মি ক্যান্ডেল ক্লোজের অপেক্ষা';ty='Market (সতর্ক)'}
+else if(zn){v=`⏳ ${P.sig} LIMIT অর্ডারের অপেক্ষা করুন — এখন ঢুকলে চেজিং ঝুঁকি`;ty='Limit @ '+zn.t}
+else if(far){v=`⏳ কাছাকাছি ${P.sig} zone নেই — নিকটতম ${far.t} (${f(m,far.lo)} – ${f(m,far.hi)}) দাম থেকে ${fp.toFixed(1)}% দূরে। এখন এন্ট্রি নয়, অপেক্ষা করুন`;ty='অপেক্ষা (zone দূরে)'}
+else{v=`⚠ স্পষ্ট zone নেই — ছোট সাইজে ${P.sig} বা অপেক্ষা`;ty='Market (zone ছাড়া)'}
+const rd=go;ADV[m]={sig:P.sig,gr:P.gr,n,ent,sl,t1,t2,zn,v,ty,ck:ck.map(x=>({t:x[0],ok:x[1]})),mode:inZ?(rd?'now':'caution'):zn?'wait':far?'far':'nozone',far:far?{lo:far.lo,hi:far.hi,t:far.t,pct:+fp.toFixed(1)}:null};
+if(me&&$('#al').checked){const k=P.sig+f(m,ent);if(rd&&EN[m]!=k){EN[m]=k;notify(`${IN[m].n}: এখনই ${P.sig} ENTRY`,`Entry ${f(m,ent)} · SL ${f(m,sl)} · TP1 ${f(m,t1)} · TP2 ${f(m,t2)}`);aiPost('assistant','🔔 নতুন সিগন্যাল!\n'+aiLocal('এন্ট্রি',m,1))}else if(!rd)delete EN[m]}
+return`<div class="card">${hd}<div class="${P.sig}" style="font-size:18px;font-weight:700">${v}</div><div class="mu">অর্ডার টাইপ: ${ty} · স্কোর ${n}/8${zn?' · '+P.sig+' zone '+f(m,zn.lo)+' – '+f(m,zn.hi):''}</div>
+<div class="kv" style="margin:8px 0"><div><span class="mu">${P.sig} Entry</span>${f(m,ent)}</div><div><span class="mu">Stop Loss</span><span class="dn">${f(m,sl)}</span></div><div><span class="mu">TP1 (1:${(Math.abs(t1-ent)/R).toFixed(1)})</span><span class="up">${f(m,t1)}</span></div><div><span class="mu">TP2 (1:${(Math.abs(t2-ent)/R).toFixed(1)})</span><span class="up">${f(m,t2)}</span></div></div>
+${ck.map(x=>`<div class="${x[1]?'up':'dn'}">${x[1]?'✓':'✗'} <span style="color:var(--tx)">${x[0]}</span></div>`).join('')}
+<div class="mu" style="margin-top:6px">SL: স্ট্রাকচারাল (zone/সুইং-এর ওপারে + ০.২৫ ATR বাফার, ০.৮–৩ ATR)। TP1-এ অর্ধেক বন্ধ করে SL ব্রেকইভেনে নিন। এটি নিয়মভিত্তিক বিশ্লেষণ, নিশ্চিত সিগন্যাল নয়।</div></div>`}
+const LP={},ADV={},EN={};let qd=0;
+function live(){if(!me||!D[inst]||!plan[inst])return;document.querySelectorAll('#px button').forEach(b=>{const m=b.dataset.i;if(LP[m])b.querySelector('b').textContent=f(m,LP[m])});jr();checkAlert();drawChart();const e=$('#adv');if(e)e.innerHTML=advice()}
+const HI=/fomc|fed\b|cpi|nfp|powell|rate (cut|hike)|inflation|sec\b|etf|hack|tariff|war/i;
+function newsRisk(){const h=new Date().getUTCHours(),ss=h<7?'Asia':h<12?'London':h<16?'London+NY':h<21?'NY':'অফ-আওয়ার',ssn=`<div class="mu" style="margin-top:6px">🕒 সেশন: ${ss}${h<7||h>=21?' · লিকুইডিটি কম, সিগন্যালে বাড়তি সতর্ক':''}</div>`;if(!news)return ssn;const now=Date.now()/1000;const r=news.filter(x=>now-x.published_on<7200&&HI.test(x.title));
+return r.length?`<div class="card warn" style="margin:8px 0 0">⚠ গত ২ ঘণ্টায় হাই-ইম্প্যাক্ট নিউজ: ${r.length}টি — সাবধানে ট্রেড করুন</div>`+ssn:ssn}
+async function loadNews(){try{const r=await fetch('https://min-api.cryptocompare.com/data/v2/news/?lang=EN');news=(await r.json()).Data||[];renderNews();render()}catch(e){$('#nl').innerHTML='<div class="card dn">নিউজ আনা যায়নি</div>'}}
+const BU=/surge|rally|gain|jump|rise|approve|inflow|record|bull|soar/i,BE=/drop|fall|crash|plunge|ban|hack|outflow|bear|lawsuit|sell-?off|fear/i;
+function renderNews(){if(!news)return;const kw=inst=='XAU'?/gold|fed|inflation|dollar|rate|cpi|treasur|paxg|tariff|war/i:/btc|bitcoin|etf|sec\b|fed|crypto|whale|miner/i;
+let L=news.filter(x=>kw.test(x.title+' '+x.categories));if(L.length<4)L=news;L=L.slice(0,10);
+$('#nl').innerHTML=`<div class="mu">${IN[inst].n} সম্পর্কিত খবর (CryptoCompare)। গোল্ডের জন্য ক্রিপ্টো-ফিডে সীমিত কভারেজ — অফিসিয়াল ইকোনমিক ক্যালেন্ডার আলাদা দেখুন।</div>`+L.map(x=>{const s=BU.test(x.title)?['বুলিশ','up']:BE.test(x.title)?['বেয়ারিশ','dn']:['নিরপেক্ষ','mu'];
+return`<div class="card"><a href="${su(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a><div class="mu">${esc(x.source)} · ${new Date(x.published_on*1000).toLocaleString('bn-BD')} · <span class="${s[1]}">${s[0]}</span>${HI.test(x.title)?' · <span class="NO">⚠ হাই-ইম্প্যাক্ট</span>':''}</div></div>`}).join('')}
+function fillCalc(force){const m=$('#ci').value,P=plan[m];if(!P)return;advice(m);const A=ADV[m],ok=A&&A.sig!='NO',man=$('#cm').checked;
+const dir=ok?A.sig:P.ad>0?'BUY':P.ad<0?'SELL':'',ent=ok?A.ent:(LP[m]||P.px),sl=ok?A.sl:P.sl,tp=ok?A.t1:P.t1;
+if(force||!man||!$('#ce').value){$('#ce').value=dir?f(m,ent):'';$('#cs').value=dir&&sl!=null?f(m,sl):'';$('#ct').value=dir&&tp!=null?f(m,tp):''}
+$('#cst').innerHTML=!dir?'<span class="NO">এখন কোনো স্পষ্ট দিক নেই — অ্যাপ অপেক্ষা করছে</span>':ok?`<b class="${dir}">${dir}</b> · ${A.mode=='now'?'এখনই Market এন্ট্রি':A.mode=='caution'?'zone-এ, সতর্ক (ছোট সাইজ)':'LIMIT অর্ডারের অপেক্ষা'} · স্কোর ${A.n}/8`:`<b class="NO">${dir} (রেফারেন্স)</b> · সিগন্যাল নেই, ট্রেড না করাই ভালো`;
+calc()}
+function calc(){const m=$('#ci').value,b=+$('#cb').value,r=+$('#cr').value,e=+$('#ce').value,s=+$('#cs').value,t=+$('#ct').value,I=IN[m];
+if(!(b>0&&r>0&&e>0&&s>0&&e!=s)){$('#co').innerHTML=`<span class="mu">${$('#cm').checked?'Entry ও Stop Loss দিন':'অ্যাপ দিক নির্ণয় করলে Entry/SL এখানে অটো আসবে'}</span>`;return}
+const risk=b*r/100,dist=Math.abs(e-s),sp=+$('#csp').value||0,q=m=='XAU'?100:1000,lot=Math.floor(risk/((dist+sp)*I.cs)*q)/q,rw=t?Math.abs(t-e)*lot*I.cs:0;
+$('#co').innerHTML=`<div class="kv"><div><span class="mu">দিক</span>${s<e?'BUY':'SELL'}</div><div><span class="mu">রিস্ক</span>$${risk.toFixed(2)}</div><div><span class="mu">SL দূরত্ব</span>${dist.toFixed(I.d)}</div><div><span class="mu">পজিশন সাইজ</span><b style="font-size:20px;color:var(--ac)">${lot.toFixed(m=='XAU'?2:4)}</b> <span class="mu">${I.u}</span></div>
+${t?`<div><span class="mu">সম্ভাব্য লাভ</span><span class="up">$${rw.toFixed(2)}</span></div><div><span class="mu">Risk:Reward</span>1:${(Math.abs(t-e)/(dist+sp)).toFixed(2)}</div>`:''}</div>
+<div class="mu" style="margin-top:6px">${m=='XAU'?'১ লট = ১০০ আউন্স ধরা হয়েছে':''} ব্রোকারভেদে কন্ট্রাক্ট সাইজ আলাদা হতে পারে; স্প্রেড/স্লিপেজ আলাদা।</div>`+(lot<1/q?`<div class="card warn">⚠ ন্যূনতম লট (${1/q}) নিলেও ঝুঁকি $${((dist+sp)*I.cs/q).toFixed(2)}, যা আপনার সেট রিস্ক ($${risk.toFixed(2)}) ছাড়িয়ে যায় — রিস্ক % বাড়ান বা এই ট্রেড এড়ান</div>`:'')+(PFM!=null&&risk>PFM?'<div class="card warn">⚠ এই ট্রেডের রিস্ক ($'+risk.toFixed(2)+') প্রপ লিমিটের অবশিষ্ট জায়গা ($'+PFM.toFixed(2)+') ছাড়িয়ে যাচ্ছে</div>':'')}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-t],[data-i],[data-f]');if(!t)return;
+if(t.dataset.t){document.querySelectorAll('.w>.tabs button').forEach(b=>b.classList.toggle('on',b==t));['a','n','c','v'].forEach(i=>$('#'+i).classList.toggle('hide',i!=t.dataset.t));if(t.dataset.t=='v'){tvk='';tv()}if(t.dataset.t=='n')ecal()}
+if(t.dataset.i){inst=t.dataset.i;setTimeout(()=>{if(!$('#v').classList.contains('hide'))tv()});$('#ci').value=inst;$('#ce').value='';renderNews();render()}
+if(t.dataset.f){tf=t.dataset.f;render()}});
+$('#rf').onclick=()=>{LT=0;load();lp()};$('#cu').onclick=()=>fillCalc(true);
+$('#cm').onchange=()=>{['ce','cs','ct'].forEach(i=>$('#'+i).readOnly=!$('#cm').checked);if(!$('#cm').checked)fillCalc(true)};['ci','cb','cr','ce','cs','ct','csp'].forEach(i=>$('#'+i).addEventListener('input',()=>{if(i=='ci'){$('#ce').value='';fillCalc(true)}else calc()}));
+function setAuto(){clearInterval(timer);const s=+$('#auto').value;if(s)timer=setInterval(()=>{if(!document.hidden)load()},s*1000)}
+const LS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
+async function hsh(p,s){const d=s+p;try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(d));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=5381;for(const c of d)h=(h*33^c.charCodeAt(0))>>>0;return'x'+h}}
+let me=null,mode='login';
+function enter(em){const U=LS('gb_users')||{},u=U[em];me=em;const s=u.set||{b:1000,r:1,a:30};
+$('#cb').value=s.b;$('#cr').value=s.r;$('#auto').value=LS('gb_v7')&&[0,15,30,60,300].includes(s.a)?s.a:60;LS('gb_v7',1);$('#un').textContent='👤 '+u.name;
+$('#au').classList.add('hide');$('#ap').value=$('#ap2').value='';setAuto();jrender();load();bsConnect();oaLoop()}
+function saveSet(){if(!me)return;const U=LS('gb_users')||{};if(!U[me])return;U[me].set={b:+$('#cb').value||1000,r:+$('#cr').value||1,a:+$('#auto').value};LS('gb_users',U)}
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x==b));
+document.querySelectorAll('.rg').forEach(e=>e.classList.toggle('hide',mode!='reg'));$('#ag').textContent=mode=='reg'?'Register':'Login';$('#aer').textContent=''});
+$('#ag').onclick=async()=>{const em=$('#ae').value.trim().toLowerCase(),pw=$('#ap').value,U=LS('gb_users')||{},er=$('#aer');
+if(!/^\S+@\S+\.\S+$/.test(em))return er.textContent='সঠিক ইমেইল দিন';
+if(pw.length<6)return er.textContent='পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে';
+if(mode=='reg'){const nm=$('#an').value.trim();
+if(!nm)return er.textContent='নাম দিন';
+if(pw!=$('#ap2').value)return er.textContent='দুই পাসওয়ার্ড মিলছে না';
+if(U[em])return er.textContent='এই ইমেইল আগেই নিবন্ধিত, Login করুন';
+const salt=Math.random().toString(36).slice(2);U[em]={name:nm,salt,hash:await hsh(pw,salt),set:{b:1000,r:1,a:30}};LS('gb_users',U)}
+else{const u=U[em];if(!u||u.hash!=await hsh(pw,u.salt))return er.textContent='ইমেইল বা পাসওয়ার্ড ভুল'}
+er.textContent='';LS('gb_sess',em);enter(em)};
+$('#lo').onclick=()=>{LS('gb_sess',null);me=null;clearInterval(timer);D={};plan={};$('#a1').innerHTML='';$('#a3').innerHTML='';$('#au').classList.remove('hide')};
+$('#auto').onchange=()=>{setAuto();saveSet()};['cb','cr'].forEach(i=>$('#'+i).addEventListener('input',saveSet));
+let ecd=0;
+function tvw(el,src,cfg){el.innerHTML='';const w=document.createElement('div');w.className='tradingview-widget-container';w.innerHTML='<div class="tradingview-widget-container__widget"></div>';const e=document.createElement('script');e.src='https://s3.tradingview.com/external-embedding/'+src+'.js';e.async=true;e.text=JSON.stringify(cfg);w.appendChild(e);el.appendChild(w)}
+function ecal(){if(ecd)return;ecd=1;$('#ec').innerHTML='<h2>অর্থনৈতিক ক্যালেন্ডার (TradingView)</h2><div id="ecw"></div>';tvw($('#ecw'),'embed-widget-events',{colorTheme:'dark',isTransparent:true,width:'100%',height:420,locale:'en',importanceFilter:'-1,0,1',currencyFilter:'USD'})}
+let TDK=LS('gb_td')||'',TDERR='',tvk='';const TC=LS('gb_tdc2')||{},IV={'5m':'5min','15m':'15min','1h':'1h','4h':'4h','1d':'1day'},TTL={'5m':180,'15m':900,'1h':3600,'4h':14400,'1d':86400};
+const TPd={'5m':300,'15m':900,'1h':3600,'4h':14400,'1d':86400};let TQ=Promise.resolve(),TL=0;
+const tdu=()=>{const d=new Date().toISOString().slice(0,10);let u=LS('gb_tdu');return u&&u.d==d?u:{d,n:0}};
+function tdq(cost,fn){const run=async()=>{const w=TL+7600-Date.now();if(w>0)await new Promise(r=>setTimeout(r,w));TL=Date.now()+7600*(cost-1);const u=tdu();if(u.n+cost>790)throw new Error('দৈনিক ক্রেডিট সীমা (৮০০) প্রায় শেষ');u.n+=cost;LS('gb_tdu',u);return fn()};const p=TQ.then(run);TQ=p.catch(()=>{});return p}
+const tms=x=>Date.parse(x.length>10?x.replace(' ','T')+'Z':x+'T00:00:00Z')/1e3;
+function tdf(s,t,L){return tdq(1,async()=>{const r=await fetch(`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(s)}&interval=${IV[t]}&outputsize=${L}&order=ASC&timezone=UTC&apikey=${encodeURIComponent(TDK)}`),j=await r.json();
+if(j.status=='error'||!j.values)throw new Error(j.message||'ডাটা পাওয়া যায়নি');return j.values.map(x=>({o:+x.open,h:+x.high,l:+x.low,c:+x.close,t:tms(x.datetime)}))})}
+const OA={'5m':'M5','15m':'M15','1h':'H1','4h':'H4','1d':'D'},BS={'5m':300,'15m':900,'1h':3600,'4h':14400,'1d':86400},SF={};
+let OT=LS('gb_ot')||'',OP=LS('gb_op')||'M';
+const srcOf=s=>{if(SF[s]&&Date.now()-SF[s]<6e5&&TDK)return'td';return s=='BTC/USD'?'bs':s=='XAU/USD'&&OT?'oa':'td'},SN=x=>({bs:'Bitstamp',oa:'OANDA',td:'TwelveData'}[x]),nf=e=>e instanceof TypeError?new Error('নেটওয়ার্ক বা ব্রাউজার (CORS) ব্লক করছে'):e;
+async function oaF(p){try{const r=await fetch('https://api-fxpractice.oanda.com'+p,{headers:{Authorization:'Bearer '+OT}});if(!r.ok)throw new Error(r.status==401?'OANDA টোকেন ভুল':'OANDA HTTP '+r.status);return await r.json()}catch(e){throw nf(e)}}
+async function oaId(){let i=LS('gb_oaid');if(i)return i;const j=await oaF('/v3/accounts');i=j.accounts&&j.accounts[0]&&j.accounts[0].id;if(!i)throw new Error('OANDA অ্যাকাউন্ট পাওয়া যায়নি');LS('gb_oaid',i);return i}
+async function oaP(){const j=await oaF(`/v3/accounts/${await oaId()}/pricing?instruments=XAU_USD`),q=j.prices&&j.prices[0],b=+(q&&q.bids&&q.bids[0].price),a=+(q&&q.asks&&q.asks[0].price);return OP=='B'?b:(a+b)/2}
+async function fetchK(src,s,t,L){if(src=='td')return tdf(s,t,L);
+if(src=='oa'){const j=await oaF(`/v3/instruments/XAU_USD/candles?granularity=${OA[t]}&count=${L}&price=${OP}&dailyAlignment=17&alignmentTimezone=America%2FNew_York`);return j.candles.map(x=>{const q=x[OP=='B'?'bid':'mid'];return{o:+q.o,h:+q.h,l:+q.l,c:+q.c,t:Date.parse(x.time.replace(/\.\d+Z$/,'Z'))/1e3}})}
+try{const r=await fetch(`https://www.bitstamp.net/api/v2/ohlc/btcusd/?step=${BS[t]}&limit=${Math.min(L,1000)}`);if(!r.ok)throw new Error('Bitstamp HTTP '+r.status);const j=await r.json();return j.data.ohlc.map(x=>({o:+x.open,h:+x.high,l:+x.low,c:+x.close,t:+x.timestamp}))}catch(e){throw nf(e)}}
+function getK(s,t){const src=srcOf(s),key=src+s+t,c=TC[key],P=TPd[t],kk=c&&c.k.length?c.k[c.k.length-1].t:0;
+if(c&&(Date.now()/1e3<kk+P+15||Date.now()-c.t<(P>=3600?3e5:6e4)))return Promise.resolve(c.k);
+return PQ[key]||(PQ[key]=(async()=>{try{const k=await fetchK(src,s,t,500);TC[key]={t:Date.now(),k};LS('gb_tdc2',TC);return k}catch(e){if(src!='td'&&TDK){SF[s]=Date.now();TDERR=SN(src)+': '+(e.message||'error');delete PQ[key];return getK(s,t)}TDERR=e.message||'error';if(c)return c.k;throw e}finally{delete PQ[key]}})())}
+$('#tk').value=TDK;
+$('#tks').onclick=()=>{TDK=$('#tk').value.trim();LS('gb_td',TDK);for(const k in TC)delete TC[k];load()};
+$('#tkc').onclick=()=>{TDK='';LS('gb_td','');$('#tk').value='';for(const k in TC)delete TC[k];load()};
+function tv(){const sym=inst=='XAU'?'OANDA:XAUUSD':'BITSTAMP:BTCUSD',iv={'5m':'5','15m':'15','1h':'60','4h':'240','1d':'D'}[tf],key=sym+iv;if(key==tvk)return;tvk=key;
+const go=()=>{$('#v').innerHTML='<div id="tvw" style="height:520px"></div><p class="mu">TradingView লাইভ চার্ট ('+sym+')। এটি শুধু দেখার জন্য; সিগন্যাল ও বিশ্লেষণ অ্যাপের নিজস্ব ডাটা থেকে আসে।</p><h2>TradingView টেকনিক্যাল সামারি</h2><div id="tav"></div>';tvw($('#tav'),'embed-widget-technical-analysis',{interval:tf=='1d'?'1D':tf,width:'100%',height:420,symbol:sym,showIntervalTabs:true,locale:'en',colorTheme:'dark',isTransparent:true});new TradingView.widget({container_id:'tvw',symbol:sym,interval:iv,timezone:'Asia/Dhaka',theme:'dark',style:'1',locale:'en',autosize:true,allow_symbol_change:false})};
+if(window.TradingView)go();else{const e=document.createElement('script');e.src='https://s3.tradingview.com/tv.js';e.onload=go;e.onerror=()=>{tvk='';$('#v').innerHTML='<div class="card dn">TradingView লোড হয়নি, ইন্টারনেট চেক করুন</div>'};document.head.appendChild(e)}}
+let PFM=null,PFR=0;const PR={i:[3,6,'t',0],s1:[4,6,'t',10],s2:[4,8,'t',8],el:[4,10,'t',8],cr:[3,6,'t',10]},PI=['ps','pb','pd','ph','pl','pm','pt','pg','pp'];
+function pf(){const S=+$('#ps').value,B=+$('#pb').value||S,Dd=+$('#pd').value||B,H=+$('#ph').value||Math.max(S,B),dl=+$('#pl').value,md=+$('#pm').value,tr=$('#pt').value,pg=+$('#pg').value;
+LS('gb_pf',PI.reduce((o,i)=>(o[i]=$('#'+i).value,o),{}));
+if(!(S>0&&dl>0&&md>0)){$('#po').innerHTML='<span class="mu">অ্যাকাউন্ট সাইজ ও লিমিট দিন</span>';PFM=null;return}
+const dLim=S*dl/100,dLoss=Math.max(0,Dd-B),remD=dLim-dLoss,floor=tr=='s'?S-S*md/100:tr=='l'?Math.min(S,H-S*md/100):H-S*md/100,remM=B-floor,mx=Math.min(remD,remM),safe=Math.max(0,Math.min(S*.01,mx/3)),prof=B-S;
+PFM=Math.max(0,mx);PFR=safe;const c=v=>v>0?'up':'dn',m=v=>'$'+v.toFixed(2);
+$('#po').innerHTML=`<div class="kv"><div><span class="mu">ডেইলি লস লিমিট</span>${m(dLim)}</div><div><span class="mu">আজকের লস</span>${m(dLoss)}</div><div><span class="mu">আজ আর ঝুঁকি নেওয়া যাবে</span><b class="${c(remD)}">${m(remD)}</b></div><div><span class="mu">ড্রডাউন ফ্লোর (ব্যালেন্স এর নিচে গেলে ব্রিচ)</span>${m(floor)}</div><div><span class="mu">ফ্লোর পর্যন্ত বাফার</span><b class="${c(remM)}">${m(remM)}</b></div><div><span class="mu">প্রফিট টার্গেট</span>${pg?m(S*pg/100)+' (অগ্রগতি '+Math.max(0,prof/(S*pg/100)*100).toFixed(0)+'%)':'নেই'}</div></div>
+${mx<=0?'<div class="dn" style="margin-top:6px">⚠ লিমিট ভেঙেছে বা ছুঁয়েছে — নতুন ট্রেড নয়</div>':`<div style="margin-top:6px">সুপারিশকৃত সর্বোচ্চ রিস্ক প্রতি ট্রেডে: <b style="color:var(--ac)">${m(safe)}</b> <span class="mu">(অ্যাকাউন্টের ১% বা অবশিষ্ট বাফারের ১/৩, যেটি কম)</span></div>`}`;calc()}
+$('#pp').onchange=()=>{const p=PR[$('#pp').value];if(p){$('#pl').value=p[0];$('#pm').value=p[1];$('#pt').value=p[2];$('#pg').value=p[3]}pf()};
+PI.forEach(i=>$('#'+i).addEventListener('input',pf));
+$('#pu').onclick=()=>{if(!(PFR>0))return;const B=+$('#pb').value||+$('#ps').value;$('#cb').value=B;$('#cr').value=(PFR/B*100).toFixed(2);saveSet();calc()};
+{const sv=LS('gb_pf');if(sv)PI.forEach(i=>{if(sv[i]!=null)$('#'+i).value=sv[i]});if(!$('#pl').value)$('#pp').onchange();else pf()}
+let AC=null;const fired={},LN=()=>window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.LocalNotifications,mkAC=()=>{try{AC=AC||new(window.AudioContext||window.webkitAudioContext)()}catch(x){}};
+function beep(){try{if(!AC)return;[0,.35].forEach(t=>{const o=AC.createOscillator(),g=AC.createGain();o.frequency.value=880;g.gain.value=.2;o.connect(g);g.connect(AC.destination);o.start(AC.currentTime+t);o.stop(AC.currentTime+t+.2)})}catch(e){}}
+function notify(t,b){const e=$('#bn');e.innerHTML='<b>'+t+'</b><br>'+b;e.classList.remove('hide');clearTimeout(notify.h);notify.h=setTimeout(()=>e.classList.add('hide'),15000);beep();
+try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(x){}
+try{const l=LN();if(l)l.schedule({notifications:[{id:Date.now()%2147483000,title:t,body:b}]});else if('Notification'in window&&Notification.permission=='granted')new Notification(t,{body:b})}catch(x){}}
+function zoneOf(m){const T=D[m],P=plan[m],px=LP[m]||T['5m'].px,X1=T['1h'],a=X1.a,d=P.sig=='BUY'?1:-1,c=[];
+if(d==1){if(X1.dem)c.push(X1.dem);X1.fg.filter(q=>q.d==1&&q.hi<=px+a*.3).forEach(q=>c.push(q))}else{if(X1.sup)c.push(X1.sup);X1.fg.filter(q=>q.d==-1&&q.lo>=px-a*.3).forEach(q=>c.push(q))}
+const zn=c.sort((x,y)=>d==1?y.hi-x.hi:x.lo-y.lo)[0]||null;return{px,a,zn,inZ:!!zn&&px>=zn.lo-a*.2&&px<=zn.hi+a*.2}}
+function checkAlert(){if(!me||!$('#al').checked)return;for(const m in IN){if(mc(m).c){delete fired[m];delete EN[m];continue}advice(m);const P=plan[m];if(!P||P.sig=='NO'){delete fired[m];continue}
+const z=zoneOf(m);if(!z.zn)continue;const k=P.sig+z.zn.lo.toFixed(2);
+if(z.inZ){if(fired[m]!==k){fired[m]=k;notify(`${IN[m].n}: ${P.sig} zone-এ দাম পৌঁছেছে`,`দাম ${f(m,z.px)} · zone ${f(m,z.zn.lo)} – ${f(m,z.zn.hi)} · চার্ট ও এন্ট্রি প্ল্যান দেখে SL সহ ট্রেড করুন`)}}
+else if(fired[m]===k&&Math.abs(z.px-(z.zn.lo+z.zn.hi)/2)>z.a)delete fired[m]}}
+$('#al').checked=!!LS('gb_al');$('#bn').onclick=e=>e.currentTarget.classList.add('hide');
+document.addEventListener('click',()=>{if($('#al').checked)mkAC()});
+$('#al').onchange=async e=>{LS('gb_al',e.target.checked);if(!e.target.checked)return;mkAC();
+try{const l=LN();if(l)await l.requestPermissions();else if('Notification'in window&&Notification.permission=='default')await Notification.requestPermission()}catch(x){}
+notify('অ্যালার্ট চালু','এন্ট্রি zone-এ দাম পৌঁছালে এভাবে জানানো হবে')};
+window.addEventListener('resize',()=>drawChart());
+let stm=0,bsw=null,oat=0,oae=0;
+function sched(){if(stm)return;stm=setTimeout(()=>{stm=0;if(me&&Object.keys(IN).every(m=>D[m]&&TFS.every(t=>D[m][t]))){for(const m in IN)mkPlan(m);jr();render();checkAlert();$('#st').textContent='লাইভ: '+new Date().toLocaleTimeString('bn-BD')+' · XAU '+SN(srcOf('XAU/USD'))+', BTC '+SN(srcOf('BTC/USD'))+(TDK&&srcOf('XAU/USD')=='td'?' · TD ক্রেডিট '+tdu().n+'/800':'')}},1500)}
+function bsConnect(){if(!me||(bsw&&bsw.readyState<2))return;try{bsw=new WebSocket('wss://ws.bitstamp.net');
+bsw.onopen=()=>{bsw.send(JSON.stringify({event:'bts:subscribe',data:{channel:'live_trades_btcusd'}}));$('#bsst').textContent='BTC লাইভ: Bitstamp ✓'};
+bsw.onmessage=e=>{try{const d=JSON.parse(e.data);if(d.event=='trade'&&d.data){const v=+d.data.price;if(v>0){LP.BTC=v;sched();liveTick()}}else if(d.event=='bts:request_reconnect')bsw.close()}catch(_){}};
+bsw.onclose=()=>{$('#bsst').textContent='BTC লাইভ: পুনঃসংযোগ…';setTimeout(bsConnect,3000)};bsw.onerror=()=>{}}catch(e){}}
+function oaLoop(){clearInterval(oat);if(!OT)return;oat=setInterval(async()=>{if(!me||document.hidden||mc('XAU').c||srcOf('XAU/USD')!='oa')return;try{const v=await oaP();if(v>0){LP.XAU=v;oae=0;sched();liveTick()}}catch(e){if(++oae>=5){SF['XAU/USD']=Date.now();TDERR='OANDA লাইভ: '+(e.message||'error')}}},1000)}
+$('#ot').value=OT;$('#oop').value=OP;
+const oaClr=()=>{for(const k in TC)if(k.startsWith('oa'))delete TC[k]};
+$('#oop').onchange=()=>{OP=$('#oop').value;LS('gb_op',OP);oaClr();load()};
+$('#ots').onclick=async()=>{OT=$('#ot').value.trim();LS('gb_ot',OT);LS('gb_oaid',null);delete SF['XAU/USD'];oaClr();const o=$('#os');if(!OT){o.textContent='';return}o.textContent='টেস্ট হচ্ছে…';
+try{const p=await oaP();await fetchK('oa','XAU/USD','5m',5);o.innerHTML='<span class="up">✓ OANDA সংযুক্ত · XAU_USD '+f('XAU',p)+'</span>';oaLoop();load()}catch(e){o.innerHTML='<span class="dn">✗ '+esc(e.message||'ব্যর্থ')+(TDK?' — গোল্ড আপাতত Twelve Data থেকে আসবে':'')+'</span>'}};
+$('#oto').onclick=()=>{OT='';LS('gb_ot','');LS('gb_oaid',null);$('#ot').value='';$('#os').textContent='';clearInterval(oat);load()};
+const jl={};
+function jr(){if(!me)return;let J=LS('gb_j'+me)||[],ch=0;for(const m in IN){const P=plan[m];if(!P)continue;const px=LP[m]||P.px;
+J.forEach(x=>{if(x.m!=m||x.r!='open')return;const s=x.sig=='BUY'?1:-1;if((px-x.sl)*s<=0){x.r='SL';ch=1}else if((px-x.t1)*s>=0){x.r='TP1';ch=1}});
+advice(m);const A=ADV[m];if(P.sig=='NO'||!A||A.mode!='now')delete jl[m];else if(jl[m]!=P.sig&&!J.some(x=>x.m==m&&x.r=='open')){jl[m]=P.sig;J.push({d:Date.now(),m,sig:P.sig,gr:P.gr,rr:Math.abs(A.t1-A.ent)/Math.abs(A.ent-A.sl),e:A.ent,sl:A.sl,t1:A.t1,r:'open'});ch=1}}
+if(ch){J=J.slice(-200);LS('gb_j'+me,J);jrender(J)}}
+function jrender(J){if(!me)return;J=J||LS('gb_j'+me)||[];const w=J.filter(x=>x.r=='TP1').length,l=J.filter(x=>x.r=='SL').length;
+const dn=J.filter(x=>x.r=='TP1'||x.r=='SL'),tr=dn.reduce((a,x)=>a+(x.r=='TP1'?(x.rr||1.5):-1),0),gs=['A','B','R'].map(g=>{const d=dn.filter(x=>x.gr==g);return d.length?` · গ্রেড ${g}: ${d.filter(x=>x.r=='TP1').length}/${d.length}`:''}).join('');
+$('#jo').innerHTML=`<div class="mu">সমাপ্ত: ${w+l} · TP1: ${w} · SL: ${l}${w+l?' · win rate '+(w/(w+l)*100).toFixed(0)+'%':''} · মোট R: <b class="${tr>=0?'up':'dn'}">${tr.toFixed(1)}</b>${gs} (১:১.৫-এ ব্রেকইভেন ≈ ৪০%)</div>`+J.slice(-15).reverse().map(x=>`<div>${new Date(x.d).toLocaleString('bn-BD')} · ${IN[x.m].n} <span class="${x.sig}">${x.sig}${x.gr?' '+x.gr:''}</span> ${f(x.m,x.e)} → <span class="${x.r=='TP1'?'up':x.r=='SL'?'dn':'mu'}">${x.r=='open'?'চলমান':x.r}</span></div>`).join('')}
+$('#jc').onclick=()=>{if(me){LS('gb_j'+me,[]);jrender([])}};
+$('#bt').onclick=async()=>{const o=$('#bo'),b=$('#bt');b.disabled=true;o.textContent='ডাটা আনা হচ্ছে…';
+try{const k=await kl(IN[inst].s,tf,1000,1),T=[];let i=210,S=0,pk=0,dd=0,gw=0,gl=0;
+while(i<k.length-2){if(i%10==0){o.textContent='চলছে… '+Math.round(i/k.length*100)+'%';await new Promise(r=>setTimeout(r))}
+const A=analyze(k.slice(Math.max(0,i-499),i+1));if(A.sig=='NO'){i++;continue}
+const s=A.sig=='BUY'?1:-1,e=k[i].c,q=setup(A,s,e,s>0?A.dem:A.sup),sl=q.sl,tp=q.t1,rk=q.R;let r=null,j=i+1;
+for(;j<k.length&&j<=i+60;j++){const hs=s>0?k[j].l<=sl:k[j].h>=sl,ht=s>0?k[j].h>=tp:k[j].l<=tp;if(hs){r=-1;break}if(ht){r=Math.abs(tp-e)/rk;break}}
+if(r==null){j=Math.min(j,k.length-1);r=(k[j].c-e)*s/rk}
+T.push(r);S+=r;pk=Math.max(pk,S);dd=Math.max(dd,pk-S);r>0?gw+=r:gl-=r;i=j+1}
+const n=T.length,w=T.filter(x=>x>0).length;
+o.innerHTML=n?`<div class="kv"><div><span class="mu">মোট ট্রেড</span>${n}</div><div><span class="mu">Win rate</span>${(w/n*100).toFixed(0)}%</div><div><span class="mu">গড় R (expectancy)</span><b class="${S>0?'up':'dn'}">${(S/n).toFixed(2)}</b></div><div><span class="mu">মোট R</span>${S.toFixed(1)}</div><div><span class="mu">Profit factor</span>${gl?(gw/gl).toFixed(2):'∞'}</div><div><span class="mu">Max drawdown</span>${dd.toFixed(1)}R</div></div><div class="mu" style="margin-top:6px">${IN[inst].n} ${tf}: সিঙ্গেল-টাইমফ্রেম স্কোর (±৩, CHoCH সহ), অ্যাপের স্ট্রাকচারাল SL ও TP1, সর্বোচ্চ ৬০ ক্যান্ডেল ধরে রাখা। স্প্রেড/কমিশন ধরা হয়নি; একই ক্যান্ডেলে SL ও TP দুটোই ছুঁলে SL ধরা হয়েছে। মাল্টি-টাইমফ্রেম প্ল্যান ব্যাকটেস্ট হয়নি। অতীত ফল ভবিষ্যতের নিশ্চয়তা নয়।</div>`:'<span class="mu">এই সময়ে কোনো সিগন্যাল পাওয়া যায়নি</span>'}
+catch(e){o.innerHTML='<span class="dn">ব্যাকটেস্ট ব্যর্থ — ইন্টারনেট চেক করুন</span>'}b.disabled=false};
+function gradeOf(T){const ts=['15m','1h','4h','1d'];let w=0,sw=0;for(const t of ts){w+=T[t].sc*WT[t];sw+=WT[t]}w/=sw;
+const s4=T['4h'].sc,s1d=T['1d'].sc,htf=(s4+s1d*1.2)/2.2,mid=(T['1h'].sc*2+T['15m'].sc)/3;let sig='NO',gr='';
+const hd=Math.abs(htf)>=.5?Math.sign(htf):Math.abs(s1d)>=1?Math.sign(s1d):Math.abs(w)>=.75?Math.sign(w):0,md=Math.abs(mid)>=1?Math.sign(mid):0;
+const rv=hd&&md==-hd&&Math.abs(mid)>=1.5&&(T['1h'].ch==md||(T['15m'].ch==md&&T['1h'].bos==md));
+if(htf>=1&&mid>=1.5){sig='BUY';gr='A'}else if(htf<=-1&&mid<=-1.5){sig='SELL';gr='A'}
+else if(hd&&md==hd&&Math.abs(mid)>=1&&htf*hd>-.25){sig=hd>0?'BUY':'SELL';gr='B'}
+else if(rv){sig=md>0?'BUY':'SELL';gr='R'}
+else if(hd){sig=hd>0?'BUY':'SELL';gr='C'}
+return{sig,gr}}
+$('#bm').onclick=async()=>{const o=$('#bmo'),b=$('#bm'),m=inst;b.disabled=true;
+try{const TS=['15m','1h','4h','1d'],LM={'15m':4000,'1h':1500,'4h':1000,'1d':600},K={},C={};
+for(const t of TS){o.textContent='ডাটা আনা হচ্ছে… '+t;K[t]=await kl(IN[m].s,t,LM[t],1)}
+const cnt=(t,ct)=>{const k=K[t];let lo=0,hi=k.length;while(lo<hi){const x=(lo+hi)>>1;k[x].t+BS[t]<=ct?lo=x+1:hi=x}return lo};
+const an=(t,ct)=>{const n=cnt(t,ct);if(n<210)return null;const c=C[t];if(c&&c.n==n)return c.A;const A=analyze(K[t].slice(Math.max(0,n-500),n));C[t]={n,A};return A};
+const R={A:[],B:[],R:[],C:[]},k1=K['1h'],k15=K['15m'];let free=0,first=0;
+for(let i=0;i<k1.length;i++){const ct=k1[i].t+3600;if(ct<=free)continue;
+if(i%8==0){o.textContent='চলছে… '+Math.round(i/k1.length*100)+'%';await new Promise(r=>setTimeout(r))}
+const T={};let ok=1;for(const t of TS){T[t]=an(t,ct);if(!T[t]){ok=0;break}}if(!ok)continue;
+if(!first)first=ct;const g=gradeOf(T);if(g.sig=='NO')continue;
+const s=g.sig=='BUY'?1:-1,e=T['1h'].px,q=setup(T['1h'],s,e,s>0?T['1h'].dem:T['1h'].sup),j=cnt('15m',ct);if(j>=k15.length)break;
+let r=null,x=j,last=j;for(;x<k15.length&&x<j+96;x++){const c=k15[x],hs=s>0?c.l<=q.sl:c.h>=q.sl,ht=s>0?c.h>=q.t1:c.l<=q.t1;last=x;if(hs){r=-1;break}if(ht){r=Math.abs(q.t1-e)/q.R;break}}
+if(r==null){if(x<j+96)break;r=(k15[last].c-e)*s/q.R}
+R[g.gr].push(r);free=k15[last].t+900}
+const days=first?Math.max(0,(k15[k15.length-1].t-first)/86400):0;
+const st=a=>{const n=a.length,w=a.filter(x=>x>0).length,S=a.reduce((p,x)=>p+x,0),gw=a.filter(x=>x>0).reduce((p,x)=>p+x,0),gl=-a.filter(x=>x<=0).reduce((p,x)=>p+x,0);return{n,w,S,gw,gl}};
+const rows=[['A',R.A],['B',R.B],['R',R.R],['C',R.C],['সব',[...R.A,...R.B,...R.R,...R.C]]].map(([g,a])=>{const z=st(a),ex=z.n?z.S/z.n:0,v=g=='সব'?'':!z.n?'—':ex>0?(z.n>=30?'✅ লাভজনক':'⚠ লাভ দেখাচ্ছে, নমুনা ছোট'):'❌ লাভজনক নয়';
+return`<tr><td><b>${g}</b></td><td>${z.n}</td><td>${z.n?(z.w/z.n*100).toFixed(0)+'%':'—'}</td><td class="${ex>0?'up':'dn'}">${z.n?ex.toFixed(2):'—'}</td><td>${z.S.toFixed(1)}</td><td>${z.gl?(z.gw/z.gl).toFixed(2):z.gw?'∞':'—'}</td><td>${v}</td></tr>`}).join('');
+o.innerHTML=`<div style="overflow-x:auto"><table><tr><th>গ্রেড</th><th>ট্রেড</th><th>Win%</th><th>গড় R</th><th>মোট R</th><th>PF</th><th>মূল্যায়ন</th></tr>${rows}</table></div>
+<div class="mu" style="margin-top:6px">${IN[m].n} · কভার করা সময় ≈ ${days.toFixed(0)} দিন। সিদ্ধান্ত প্রতি ১ঘণ্টা ক্যান্ডেল ক্লোজে; Entry = সেই ক্লোজ, SL/TP1 = অ্যাপের setup(), ফলাফল ১৫মি ক্যান্ডেলে দেখা, সর্বোচ্চ ২৪ ঘণ্টা ধরে রাখা। একই ক্যান্ডেলে SL ও TP দুটোই ছুঁলে SL ধরা। ৫মি টাইমফ্রেম ও স্প্রেড/কমিশন বাদ। গ্রেড C লাইভে শুধু LIMIT-এর পরামর্শ, কিন্তু এখানে Market এন্ট্রি ধরা, তাই C-এর ফল শুধু রেফারেন্স। ৩০টির কম ট্রেডে ফল ভরসাযোগ্য নয়; অতীত ফল ভবিষ্যতের নিশ্চয়তা নয়।</div>`}
+catch(e){o.innerHTML='<span class="dn">ব্যাকটেস্ট ব্যর্থ: '+esc(e&&e.message||'অজানা ত্রুটি')+'</span>'}b.disabled=false};
+function jcsv(){const J=me?LS('gb_j'+me)||[]:[],L=[['time_utc','instrument','signal','grade','entry','sl','tp1','rr_planned','result','r_multiple'].join(',')];
+for(const x of J)L.push([new Date(x.d).toISOString(),IN[x.m]?IN[x.m].n:x.m,x.sig,x.gr||'',x.e,x.sl,x.t1,x.rr!=null?(+x.rr).toFixed(2):'',x.r,x.r=='TP1'?(+x.rr||1.5).toFixed(2):x.r=='SL'?'-1':''].join(','));return{n:J.length,t:L.join('\r\n')}}
+$('#jx').onclick=async()=>{const c=jcsv(),b=$('#jx');if(!c.n){b.textContent='জার্নাল খালি';setTimeout(()=>b.textContent='CSV এক্সপোর্ট',1500);return}
+const n='journal_'+new Date().toISOString().slice(0,10)+'.csv',fl=new File(['\ufeff'+c.t],n,{type:'text/csv'});
+try{if(navigator.canShare&&navigator.canShare({files:[fl]})){await navigator.share({files:[fl],title:n});return}}catch(e){if(e&&e.name=='AbortError')return}
+const a=document.createElement('a');a.href=URL.createObjectURL(fl);a.download=n;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)};
+$('#jy').onclick=async()=>{const c=jcsv(),b=$('#jy');if(!c.n){b.textContent='জার্নাল খালি';setTimeout(()=>b.textContent='CSV কপি',1500);return}
+try{await navigator.clipboard.writeText(c.t);b.textContent='✓ কপি হয়েছে'}catch(e){b.textContent='কপি হয়নি'}setTimeout(()=>b.textContent='CSV কপি',1800)};
+function mkt(){const d=new Date(),h=d.getUTCHours(),wd=d.getUTCDay(),now=Date.now()/1000;
+const ss=h<7?['Asia','নিম্ন–মাঝারি','var(--no)']:h<12?['London','উচ্চ','var(--buy)']:h<16?['London+NY ওভারল্যাপ','সর্বোচ্চ','var(--buy)']:h<21?['New York','উচ্চ','var(--buy)']:['অফ-আওয়ার','নিম্ন','var(--sell)'];
+const closed=mc('XAU').c,hi=(news||[]).filter(x=>now-x.published_on<7200&&HI.test(x.title));
+const nl=!news?['লোড হয়নি','var(--mu)']:hi.length>=3?['উচ্চ ('+hi.length+'টি)','var(--sell)']:hi.length?['মাঝারি ('+hi.length+'টি)','var(--no)']:['কম','var(--buy)'];
+const chip=(a,b,c)=>`<span style="display:inline-block;margin:2px 6px 2px 0;padding:2px 9px;border-radius:99px;border:1px solid ${c};color:${c};font-size:13px">${a}: ${b}</span>`;
+return`<div style="margin:6px 0">${chip('🕒 সেশন',ss[0]+' · লিকুইডিটি '+ss[1],ss[2])}${chip('📰 নিউজ ঝুঁকি (২ঘণ্টা)',nl[0],nl[1])}${closed?chip('🥇 গোল্ড',mc('XAU').msg,'var(--sell)'):''}</div>${hi.length?`<div class="mu">সর্বশেষ হাই-ইম্প্যাক্ট: ${esc(hi[0].title)}</div>`:''}<div class="mu">নির্ধারিত ইভেন্ট (CPI/FOMC/NFP) নিউজ ট্যাবের ক্যালেন্ডারে দেখুন</div>`}
+{const s=LS('gb_sess'),U=LS('gb_users');if(s&&U&&U[s])enter(s);else $('#au').classList.remove('hide')}
+let _mc=mc('XAU').c;setInterval(()=>{const c=mc('XAU').c;if(c!=_mc){_mc=c;if(me&&D.XAU&&plan.XAU)render()}},30000);
+setInterval(()=>{if(me&&D[inst]&&!document.hidden)liveTick()},1000);
+LGAP=+LS('gb_lg')||15;$('#lg').value=String(LGAP);$('#lg').onchange=()=>{LGAP=+$('#lg').value||15;LS('gb_lg',LGAP)};
+setInterval(()=>{if(!me||document.hidden||!TDK||srcOf('XAU/USD')!='td'||mc('XAU').c)return;if(tdu().n>650){if(!capW){capW=1;TDERR='Twelve Data লাইভ দামের সীমা (৬৫০/দিন) শেষ — OANDA টোকেন দিন বা কাল পর্যন্ত অপেক্ষা করুন'}return}capW=0;lp()},1000);
+$('#aiSend').onclick=()=>aiAsk();$('#aiIn').addEventListener('keydown',e=>{if(e.key=='Enter'){e.preventDefault();aiAsk()}});
+$('#aiQ').onclick=e=>{const b=e.target.closest&&e.target.closest('button[data-q]');if(b)aiAsk(b.dataset.q)};
+const aiSync=()=>{const p=$('#aiPv').value;$('#aiKey').placeholder=AIP[p].ph+(aiKey(p)?' (সেভ করা আছে)':'');$('#aiMd').value=aiModel(p);$('#aiBuW').classList.toggle('hide',p!='custom');$('#aiBu').value=p=='custom'?aiBase(p):'';$('#aiNote').textContent=AIP[p].n+' — key পাবেন: '+AIP[p].u+' · '+AIP[p].x};
+$('#aiPv').value=aiPv();aiSync();aiMode();$('#aiPv').onchange=()=>{LS('gb_aip',$('#aiPv').value);aiSync();aiMode()};
+$('#aiKs').onclick=()=>{const p=$('#aiPv').value,v=$('#aiKey').value.trim(),K=LS('gb_aiks')||{},M=LS('gb_aims')||{};if(v)K[p]=v;M[p]=$('#aiMd').value.trim()||AIP[p].m;if(p=='custom'){const B=LS('gb_aibs')||{},u=$('#aiBu').value.trim();if(u&&!/^https:\/\/|^http:\/\/(localhost|127\.0\.0\.1)/i.test(u)){aiPost('assistant','⚠ Base URL https:// দিয়ে শুরু হতে হবে (বা http://localhost)। সেভ হয়নি।');return}B.custom=u;LS('gb_aibs',B)}LS('gb_aiks',K);LS('gb_aims',M);LS('gb_aip',p);$('#aiKey').value='';aiSync();aiMode();aiPost('assistant',aiOn(p)?'✓ '+AIP[p].n+' মোড চালু ('+aiModel(p)+')।':p=='custom'?'কাস্টমের জন্য Base URL ও মডেলের নাম দুটোই লাগবে — বিল্ট-ইন মোডেই আছে।':'কোনো key দেওয়া হয়নি — বিল্ট-ইন মোডেই আছে।')};
+$('#aiKc').onclick=()=>{const p=$('#aiPv').value,K=LS('gb_aiks')||{};delete K[p];LS('gb_aiks',K);aiSync();aiMode();aiPost('assistant','Key মুছে ফেলা হয়েছে।'+(aiOn(aiPv())?'':' বিল্ট-ইন মোডে ফিরে এসেছি।'))};
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script></body></html>

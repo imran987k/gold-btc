@@ -39,10 +39,11 @@ a{color:var(--ac)}.warn{border-color:var(--no);color:var(--no)}
 #au{position:fixed;inset:0;background:var(--bg);z-index:9;overflow:auto;padding:env(safe-area-inset-top) 0}
 #au .card{margin:24px 0}#au input{margin-bottom:10px}.er{color:var(--sell);min-height:20px;font-size:13px}
 .um{display:flex;justify-content:space-between;align-items:center;margin:4px 0}.um button{padding:3px 10px;font-size:13px}
+#pf{position:fixed;inset:0;background:var(--bg);z-index:8;overflow:auto;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}#pf input,#pf select,#au select{margin-bottom:8px}#au select,#pf select{width:100%}.ok{color:var(--buy);font-size:13px;min-height:18px}.lg{display:flex;justify-content:space-between;gap:8px;margin:2px 0 10px;font-size:13px}.dg{border-color:var(--sell);color:var(--sell)}
 </style></head><body><div class="w">
 <div class="top"><h1>Gold &amp; BTC SMC বিশ্লেষক</h1>
 <div class="row" style="margin:0"><select id="auto" aria-label="Auto refresh"><option value="0">Auto: বন্ধ</option><option value="15">১৫ সেকেন্ড (ক্রেডিট বেশি)</option><option value="30">৩০ সেকেন্ড</option><option value="60" selected>১ মিনিট</option><option value="300">৫ মিনিট (ক্রেডিট কম)</option></select><button class="p" id="rf">Refresh</button></div></div>
-<div class="um"><span class="mu" id="un"></span><label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--tx)"><input id="al" type="checkbox" style="width:auto">🔔 অ্যালার্ট</label><button id="lo">Logout</button></div>
+<div class="um"><span class="mu" id="un"></span><label style="display:flex;gap:6px;align-items:center;margin:0;color:var(--tx)"><input id="al" type="checkbox" style="width:auto">🔔 অ্যালার্ট</label><span style="display:flex;gap:6px"><button id="pfb">⚙ প্রোফাইল</button><button id="lo">Logout</button></span></div>
 <div class="mu" id="st">লোড হচ্ছে…</div>
 <div class="px" id="px" style="margin-top:8px"></div>
 <details class="card" open><summary>🔑 ডাটা সোর্স (TradingView-এর সাথে মিল)</summary>
@@ -88,8 +89,24 @@ a{color:var(--ac)}.warn{border-color:var(--no);color:var(--no)}
 <label>ইমেইল</label><input id="ae" type="email" autocomplete="email">
 <label>পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="ap" type="password" autocomplete="current-password">
 <div class="rg hide"><label>পাসওয়ার্ড আবার দিন</label><input id="ap2" type="password" autocomplete="new-password"></div>
+<div class="rg hide"><label>সিকিউরিটি প্রশ্ন (পাসওয়ার্ড ভুললে এটা দিয়ে রিসেট হবে)</label><select id="aq"></select><label>উত্তর</label><input id="aa" autocomplete="off"></div>
+<div class="lg"><a href="#" id="fp">পাসওয়ার্ড ভুলে গেছেন?</a><a href="#" id="bl">ব্যাকআপ থেকে ফেরান</a></div>
 <div class="er" id="aer"></div><button class="p" id="ag" style="width:100%">Login</button>
-<p class="mu">অ্যাকাউন্ট ও সেটিংস শুধু এই ডিভাইসে সংরক্ষিত থাকে। অ্যাপ মুছলে বা ডাটা ক্লিয়ার করলে তা হারাবে। পাসওয়ার্ড ভুলে গেলে রিসেটের সুযোগ নেই।</p></div></div></div>
+<p class="mu">অ্যাকাউন্ট ও সেটিংস শুধু এই ডিভাইসে সংরক্ষিত থাকে। অ্যাপ মুছলে বা ডাটা ক্লিয়ার করলে তা হারাবে। পাসওয়ার্ড ভুললে সিকিউরিটি প্রশ্নের উত্তর দিয়ে রিসেট করা যায় (ইমেইলে লিংক যায় না, কারণ কোনো সার্ভার নেই)।</p></div></div></div>
+<div id="rp" class="hide" style="position:fixed;inset:0;background:var(--bg);z-index:10;overflow:auto;padding:env(safe-area-inset-top) 0"><div class="w"><div class="card" style="margin:24px 0"><b>🔑 পাসওয়ার্ড রিসেট</b>
+<p class="mu">ইমেইল দিন, তারপর রেজিস্টারের সময় বাছাই করা সিকিউরিটি প্রশ্নের উত্তর দিন।</p>
+<label>ইমেইল</label><input id="re" type="email" autocomplete="email"><button class="p" id="rq" style="width:100%;margin-bottom:10px">প্রশ্ন দেখান</button>
+<div id="rsf" class="hide"><div id="rqt" style="color:var(--tx);margin-bottom:6px"></div><label>উত্তর</label><input id="ra" autocomplete="off"><label>নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="rn" type="password" autocomplete="new-password"><label>নতুন পাসওয়ার্ড আবার</label><input id="rn2" type="password" autocomplete="new-password"><button class="p" id="rs" style="width:100%">পাসওয়ার্ড বদলান</button></div>
+<div class="er" id="rm"></div><button id="rc" style="width:100%;margin-top:6px">← Login-এ ফিরুন</button></div></div></div>
+<input type="file" id="bf" accept=".json,application/json" class="hide"><input type="file" id="bf2" accept=".json,application/json" class="hide">
+<div id="pf" class="hide"><div class="w"><div class="top"><h1>⚙ প্রোফাইল ও সেটিংস</h1><button class="p" id="pc">✕ বন্ধ</button></div>
+<div class="card"><b>👤 প্রোফাইল</b><label style="margin-top:8px">ইমেইল (বদলানো যায় না)</label><div id="pe" style="margin-bottom:8px"></div><label>নাম</label><input id="pn" maxlength="40"><button class="p" id="pns">নাম সেভ করুন</button><div class="er" id="pm1"></div></div>
+<div class="card"><b>🔒 পাসওয়ার্ড পরিবর্তন</b><label style="margin-top:8px">বর্তমান পাসওয়ার্ড</label><input id="pcur" type="password" autocomplete="current-password"><label>নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)</label><input id="pw1" type="password" autocomplete="new-password"><label>নতুন পাসওয়ার্ড আবার</label><input id="pw2" type="password" autocomplete="new-password"><button class="p" id="pps">পাসওয়ার্ড বদলান</button><div class="er" id="pm2"></div></div>
+<div class="card"><b>❓ সিকিউরিটি প্রশ্ন (পাসওয়ার্ড ভুললে রিসেটের জন্য)</b><div class="mu" id="pqst" style="margin:6px 0"></div><label>প্রশ্ন</label><select id="pq"></select><label>উত্তর</label><input id="pa" autocomplete="off"><label>বর্তমান পাসওয়ার্ড</label><input id="pqp" type="password" autocomplete="current-password"><button class="p" id="pqs">সেভ করুন</button><div class="er" id="pm3"></div></div>
+<div class="card"><b>📊 ট্রেডিং সেটিংস</b><label style="margin-top:8px">দিনে সর্বোচ্চ কয়টি SL লাগলে নতুন Market এন্ট্রি বন্ধ (ডিফল্ট ২)</label><input id="sl" type="number" min="1" max="20" step="1"><label>এন্ট্রি zone দাম থেকে সর্বোচ্চ কত ATR দূরে হতে পারবে (ডিফল্ট ৫; কম = শুধু কাছের zone)</label><input id="zm" type="number" min="2" max="15" step="0.5"><div class="ok" id="pm4"></div></div>
+<div class="card"><b>💾 ডাটা ও ব্যাকআপ</b><p class="mu">ব্যাকআপ ফাইলে আপনার অ্যাকাউন্ট, জার্নাল ও API key থাকে। ফাইলটা কাউকে দেবেন না। নতুন লিংক বা নতুন ফোনে এই ফাইল দিয়ে সবকিছু ফিরিয়ে আনা যায়।</p><div class="row"><button class="p" id="bk">⬇ ব্যাকআপ নামান</button><button id="br">⬆ ব্যাকআপ থেকে ফেরান</button><button id="cc">🧹 ক্যাশ পরিষ্কার</button></div><div class="er" id="pm5"></div></div>
+<div class="card dg"><b>⚠ অ্যাকাউন্ট মুছুন</b><p class="mu">এই ডিভাইসে আপনার অ্যাকাউন্ট, জার্নাল ও সেটিংস স্থায়ীভাবে মুছে যাবে।</p><label>পাসওয়ার্ড দিয়ে নিশ্চিত করুন</label><input id="dp" type="password" autocomplete="current-password"><button id="dl" style="border-color:var(--sell);color:var(--sell)">অ্যাকাউন্ট মুছুন</button><div class="er" id="pm6"></div></div>
+</div></div>
 <script>
 const $=s=>document.querySelector(s),TFS=['5m','15m','1h','4h','1d'],WT={'5m':1,'15m':1.5,'1h':2,'4h':2.5,'1d':3};
 const IN={XAU:{s:'XAU/USD',n:'XAUUSD',d:2,cs:100,u:'লট'},BTC:{s:'BTC/USD',n:'BTCUSD',d:1,cs:1,u:'লট (১ লট = ১ BTC)'}};
@@ -179,7 +196,7 @@ const lab={'-1':'বেয়ারিশ','0':'নিরপেক্ষ','1':'�
 const sn=s=>s=='NO'?'NO TRADE':s;
 const dl=()=>{if(!me)return 0;const t=new Date().toDateString();return(LS('gb_j'+me)||[]).filter(x=>x.r=='SL'&&new Date(x.d).toDateString()==t).length};
 function dash(){const tc=r=>r=='BUY'?'var(--buy)':r=='SELL'?'var(--sell)':'var(--no)',n=dl();
-return`<div class="card"><b>ড্যাশবোর্ড</b>${mkt()}${n>=2?`<div class="dn" style="margin:6px 0">⛔ আজ ${n}টি SL লেগেছে — আজকের জন্য নতুন Market এন্ট্রি বন্ধ রাখুন</div>`:''}`+Object.keys(IN).map(m=>{const P=plan[m],T=D[m];if(!P||!T)return'';const ag=P.sig=='NO'?0:TFS.filter(t=>T[t].sig==P.sig).length;
+return`<div class="card"><b>ড্যাশবোর্ড</b>${mkt()}${n>=MAXSL()?`<div class="dn" style="margin:6px 0">⛔ আজ ${n}টি SL লেগেছে — আজকের জন্য নতুন Market এন্ট্রি বন্ধ রাখুন</div>`:''}`+Object.keys(IN).map(m=>{const P=plan[m],T=D[m];if(!P||!T)return'';const ag=P.sig=='NO'?0:TFS.filter(t=>T[t].sig==P.sig).length;
 return`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap"><div><b>${IN[m].n}</b> ${mc(m).c?'<span class="NO">🔒 CLOSED</span>':`<span class="${P.sig}">${sn(P.sig)}</span>`}${P.gr&&!mc(m).c?` <span class="chip">গ্রেড ${P.gr}</span>`:''}<div class="mu">অ্যালাইনমেন্ট ${ag}/5 · HTF ${P.htf.toFixed(1)}</div></div><div style="display:flex;gap:3px">${TFS.map(t=>`<span title="${t}" style="width:24px;text-align:center;font-size:10px;padding:3px 0;border-radius:4px;background:${tc(T[t].sig)};color:#10141c">${t}</span>`).join('')}</div></div>`}).join('')+'</div>'}
 function flip(m){const T=D[m],P=plan[m];if(!T||!P||P.sig=='NO')return'';const d=P.sig=='BUY'?-1:1,nm=d>0?'BUY':'SELL',bl=d>0?'বুলিশ':'বেয়ারিশ',mid=(T['1h'].sc*2+T['15m'].sc)/3;
 const ck=[['৪ঘণ্টা+দৈনিক HTF '+bl+' (স্কোর '+(d>0?'+':'−')+'১ বা বেশি) — এখন '+P.htf.toFixed(2),P.htf*d>=1],['১ঘণ্টা/১৫মি মিশ্র স্কোর '+(d>0?'+':'−')+'১.৫ বা বেশি — এখন '+mid.toFixed(2),mid*d>=1.5],['১ঘণ্টায় '+bl+' CHoCH (স্ট্রাকচার বদল)',T['1h'].ch==d]];
@@ -198,11 +215,11 @@ const AISYS='তুমি এই ট্রেডিং অ্যাপের ভ
 const md=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\n/g,'<br>');
 function aiPost(role,text){const L=$('#aiLog');if(!L)return null;const u=role=='user',d=document.createElement('div');d.style.cssText='margin:6px 0;padding:8px 10px;border-radius:10px;max-width:94%;font-size:14px;'+(u?'margin-left:auto;background:#2a3342':'background:#1f2735;border:1px solid var(--ln)');d.innerHTML=md(text);L.appendChild(d);L.scrollTop=L.scrollHeight;return d}
 function aiMode(){const p=aiPv(),e=$('#aiMode');if(e)e.textContent=aiOn(p)?AIP[p].n.split(' (')[0]+' · '+aiModel(p):'বিল্ট-ইন বিশ্লেষক'}
-function aiCtx(){const m=inst,T=D[m],P=plan[m];if(!T||!P)return null;advice(m);const X=T[tf],d=IN[m].d,r=v=>+(+v).toFixed(d),A=ADV[m]||{},lp=LP[m]||T['5m'].px,nr=z=>Math.min(Math.abs(z.lo-lp),Math.abs(z.hi-lp))<=6*X.a,bk=[...X.k.slice(X.fc?-39:-40),...(X.fc&&X.lv?[...(X.ex||[]),X.lv]:[])].map(k=>[k.t,r(k.o),r(k.h),r(k.l),r(k.c)]);
+function aiCtx(){const m=inst,T=D[m],P=plan[m];if(!T||!P)return null;advice(m);const X=T[tf],d=IN[m].d,r=v=>+(+v).toFixed(d),A=ADV[m]||{},lp=LP[m]||T['5m'].px,nr=z=>Math.min(Math.abs(z.lo-lp),Math.abs(z.hi-lp))<=(ZMX()+1)*X.a,bk=[...X.k.slice(X.fc?-39:-40),...(X.fc&&X.lv?[...(X.ex||[]),X.lv]:[])].map(k=>[k.t,r(k.o),r(k.h),r(k.l),r(k.c)]);
 return{symbol:IN[m].n,data_source:SN(srcOf(IN[m].s)),viewed_timeframe:tf,live_price:r(lp),market_closed:!!mc(m).c,local_time:new Date().toString().slice(0,24),
 overall:{signal:P.sig,grade:P.gr||null,htf_score:+P.htf.toFixed(2)},
 timeframes:TFS.map(t=>{const x=T[t];return{tf:t,signal:x.sig,score:+x.sc.toFixed(1),ema_trend:lab[x.trend],structure:lab[x.st],bos:x.bos,choch:x.ch,rsi:Math.round(x.r),atr:r(x.a)}}),
-entry_plan:A.sig&&A.sig!='NO'?{direction:A.sig,mode:A.mode,entry:A.mode=='far'?null:r(A.ent),stop_loss:A.mode=='far'?null:r(A.sl),tp1:A.mode=='far'?null:r(A.t1),tp2:A.mode=='far'?null:r(A.t2),zone:A.zn?{lo:r(A.zn.lo),hi:r(A.zn.hi),type:A.zn.t}:null,checks_passed:A.n+'/8',checks:A.ck,verdict:A.v,too_far_zone:A.far?{lo:r(A.far.lo),hi:r(A.far.hi),type:A.far.t,distance_pct:A.far.pct}:null,max_entry_distance:r(5*T['1h'].a)}:{direction:'NONE'},
+entry_plan:A.sig&&A.sig!='NO'?{direction:A.sig,mode:A.mode,entry:A.mode=='far'?null:r(A.ent),stop_loss:A.mode=='far'?null:r(A.sl),tp1:A.mode=='far'?null:r(A.t1),tp2:A.mode=='far'?null:r(A.t2),zone:A.zn?{lo:r(A.zn.lo),hi:r(A.zn.hi),type:A.zn.t}:null,checks_passed:A.n+'/8',checks:A.ck,verdict:A.v,too_far_zone:A.far?{lo:r(A.far.lo),hi:r(A.far.hi),type:A.far.t,distance_pct:A.far.pct}:null,max_entry_distance:r(ZMX()*T['1h'].a)}:{direction:'NONE'},
 levels:{support:X.sr.s.filter(nr).slice(0,3).map(z=>[r(z.lo),r(z.hi),z.n]),resistance:X.sr.r.filter(nr).slice(0,3).map(z=>[r(z.lo),r(z.hi),z.n]),fvg:X.fg.filter(nr).map(q=>({dir:q.d>0?'bull':'bear',lo:r(q.lo),hi:r(q.hi)})),demand:X.dem&&nr(X.dem)?[r(X.dem.lo),r(X.dem.hi)]:null,supply:X.sup&&nr(X.sup)?[r(X.sup.lo),r(X.sup.hi)]:null,bsl:X.bsl?r(X.bsl):null,ssl:X.ssl?r(X.ssl):null},
 candles:{tf,format:'[unix_time,open,high,low,close]',last_is_live_forming:!!X.fc,data:bk}}}
 function aiLocal(q,m,nr){m=m||inst;const T=D[m],P=plan[m];if(!T||!P)return'ডাটা এখনও লোড হয়নি — কয়েক সেকেন্ড পরে আবার জিজ্ঞাসা করুন।';if(!nr)advice(m);
@@ -333,12 +350,12 @@ const hd='<b>লাইভ এন্ট্রি বিশ্লেষণ</b> <sp
 if(P.sig=='NO'){ADV[m]={sig:'NO'};delete EN[m]}if(P.sig=='NO')return`<div class="card">${hd}<div class="NO" style="font-size:20px;font-weight:700">এখন এন্ট্রি নয় (NO TRADE)</div><div class="mu">${TFS.map(t=>t+': '+sn(T[t].sig)).join(' · ')}</div><div>টাইমফ্রেমগুলো একমত নয় বা HTF বায়াস দুর্বল। পরিষ্কার সেটআপের জন্য অপেক্ষা করুন।</div></div>`;
 const c=[];if(d==1){if(X1.dem)c.push({lo:X1.dem.lo,hi:X1.dem.hi,t:'1h Demand'});X1.fg.filter(q=>q.d==1&&q.hi<=px+a*.3).forEach(q=>c.push({lo:q.lo,hi:q.hi,t:'1h Bullish FVG'}))}
 else{if(X1.sup)c.push({lo:X1.sup.lo,hi:X1.sup.hi,t:'1h Supply'});X1.fg.filter(q=>q.d==-1&&q.lo>=px-a*.3).forEach(q=>c.push({lo:q.lo,hi:q.hi,t:'1h Bearish FVG'}))}
-const cs=c.sort((x,y)=>d==1?y.hi-x.hi:x.lo-y.lo),dz=z=>d==1?px-z.hi:z.lo-px,zn=cs.find(z=>dz(z)<=a*5)||null,far=zn?null:(cs[0]||null),fp=far?Math.abs(dz(far))/px*100:0,inZ=zn&&px>=zn.lo-a*.2&&px<=zn.hi+a*.2;
+const cs=c.sort((x,y)=>d==1?y.hi-x.hi:x.lo-y.lo),dz=z=>d==1?px-z.hi:z.lo-px,zn=cs.find(z=>dz(z)<=a*ZMX())||null,far=zn?null:(cs[0]||null),fp=far?Math.abs(dz(far))/px*100:0,inZ=zn&&px>=zn.lo-a*.2&&px<=zn.hi+a*.2;
 let ent=px;if(zn&&!inZ)ent=d==1?zn.hi:zn.lo;const q=setup(X1,d,ent,zn),sl=q.sl,t1=q.t1,t2=q.t2;
 const R=Math.abs(ent-sl),op=d==1?X1.sr.r[0]:X1.sr.s[0],T15=T['15m'];
 const ck=[['HTF (4h+1d) বায়াস পক্ষে',P.htf*d>0],['1h স্ট্রাকচার পক্ষে',X1.st==d],['15m BOS/CHoCH/ট্রেন্ড পক্ষে',T15.bos==d||T15.ch==d||T15.trend==d],['Liquidity sweep পক্ষে',[T['5m'],T15,X1].some(x=>x.sw==d)],['দাম এন্ট্রি zone-এ',!!inZ],['RSI(15m) চরম নয়',d==1?T15.r<70:T15.r>30],['বিপরীত S/R-এ পর্যাপ্ত জায়গা',!op||Math.abs((d==1?op.lo:op.hi)-ent)>=R*1.2],['বিপরীতমুখী CHoCH নেই (15m/1h)',T15.ch!=-d&&X1.ch!=-d]];
 const n=ck.filter(x=>x[1]).length;let v,ty;
-const go=!!(inZ&&dl()<2&&ck[7][1]&&(P.gr=='A'?n>=6:P.gr=='B'?n>=7:P.gr=='R'?n>=7:0));if(go){v=`✅ এখনই ${P.sig} এন্ট্রি নেওয়া যায়`;ty='Market'}
+const go=!!(inZ&&dl()<MAXSL()&&ck[7][1]&&(P.gr=='A'?n>=6:P.gr=='B'?n>=7:P.gr=='R'?n>=7:0));if(go){v=`✅ এখনই ${P.sig} এন্ট্রি নেওয়া যায়`;ty='Market'}
 else if(inZ){v=P.gr=='C'?'⚠ zone-এ আছে কিন্তু ১ঘণ্টা/১৫মি HTF-এর বিপরীতে — ১৫মি ক্যান্ডেল HTF দিকে ক্লোজ হওয়া পর্যন্ত অপেক্ষা':'⚠ zone-এ আছে, কনফার্মেশন কম — ছোট সাইজ বা ১৫মি ক্যান্ডেল ক্লোজের অপেক্ষা';ty='Market (সতর্ক)'}
 else if(zn){v=`⏳ ${P.sig} LIMIT অর্ডারের অপেক্ষা করুন — এখন ঢুকলে চেজিং ঝুঁকি`;ty='Limit @ '+zn.t}
 else if(far){v=`⏳ কাছাকাছি ${P.sig} zone নেই — নিকটতম ${far.t} (${f(m,far.lo)} – ${f(m,far.hi)}) দাম থেকে ${fp.toFixed(1)}% দূরে। এখন এন্ট্রি নয়, অপেক্ষা করুন`;ty='অপেক্ষা (zone দূরে)'}
@@ -384,7 +401,7 @@ let me=null,mode='login';
 function enter(em){const U=LS('gb_users')||{},u=U[em];me=em;const s=u.set||{b:1000,r:1,a:30};
 $('#cb').value=s.b;$('#cr').value=s.r;$('#auto').value=LS('gb_v7')&&[0,15,30,60,300].includes(s.a)?s.a:60;LS('gb_v7',1);$('#un').textContent='👤 '+u.name;
 $('#au').classList.add('hide');$('#ap').value=$('#ap2').value='';setAuto();jrender();load();bsConnect();oaLoop()}
-function saveSet(){if(!me)return;const U=LS('gb_users')||{};if(!U[me])return;U[me].set={b:+$('#cb').value||1000,r:+$('#cr').value||1,a:+$('#auto').value};LS('gb_users',U)}
+function saveSet(){if(!me)return;const U=LS('gb_users')||{};if(!U[me])return;U[me].set=Object.assign({},U[me].set,{b:+$('#cb').value||1000,r:+$('#cr').value||1,a:+$('#auto').value});LS('gb_users',U)}
 document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x==b));
 document.querySelectorAll('.rg').forEach(e=>e.classList.toggle('hide',mode!='reg'));$('#ag').textContent=mode=='reg'?'Register':'Login';$('#aer').textContent=''});
 $('#ag').onclick=async()=>{const em=$('#ae').value.trim().toLowerCase(),pw=$('#ap').value,U=LS('gb_users')||{},er=$('#aer');
@@ -394,7 +411,8 @@ if(mode=='reg'){const nm=$('#an').value.trim();
 if(!nm)return er.textContent='নাম দিন';
 if(pw!=$('#ap2').value)return er.textContent='দুই পাসওয়ার্ড মিলছে না';
 if(U[em])return er.textContent='এই ইমেইল আগেই নিবন্ধিত, Login করুন';
-const salt=Math.random().toString(36).slice(2);U[em]={name:nm,salt,hash:await hsh(pw,salt),set:{b:1000,r:1,a:30}};LS('gb_users',U)}
+const an=nrm($('#aa').value);if(an.length<2)return er.textContent='সিকিউরিটি প্রশ্নের উত্তর দিন (কমপক্ষে ২ অক্ষর)';
+const salt=Math.random().toString(36).slice(2),as=Math.random().toString(36).slice(2);U[em]={name:nm,salt,hash:await hsh(pw,salt),q:+$('#aq').value,as,ah:await hsh(an,as),set:{b:1000,r:1,a:30}};LS('gb_users',U)}
 else{const u=U[em];if(!u||u.hash!=await hsh(pw,u.salt))return er.textContent='ইমেইল বা পাসওয়ার্ড ভুল'}
 er.textContent='';LS('gb_sess',em);enter(em)};
 $('#lo').onclick=()=>{LS('gb_sess',null);me=null;clearInterval(timer);D={};plan={};$('#a1').innerHTML='';$('#a3').innerHTML='';$('#au').classList.remove('hide')};
@@ -545,5 +563,48 @@ const aiSync=()=>{const p=$('#aiPv').value;$('#aiKey').placeholder=AIP[p].ph+(ai
 $('#aiPv').value=aiPv();aiSync();aiMode();$('#aiPv').onchange=()=>{LS('gb_aip',$('#aiPv').value);aiSync();aiMode()};
 $('#aiKs').onclick=()=>{const p=$('#aiPv').value,v=$('#aiKey').value.trim(),K=LS('gb_aiks')||{},M=LS('gb_aims')||{};if(v)K[p]=v;M[p]=$('#aiMd').value.trim()||AIP[p].m;if(p=='custom'){const B=LS('gb_aibs')||{},u=$('#aiBu').value.trim();if(u&&!/^https:\/\/|^http:\/\/(localhost|127\.0\.0\.1)/i.test(u)){aiPost('assistant','⚠ Base URL https:// দিয়ে শুরু হতে হবে (বা http://localhost)। সেভ হয়নি।');return}B.custom=u;LS('gb_aibs',B)}LS('gb_aiks',K);LS('gb_aims',M);LS('gb_aip',p);$('#aiKey').value='';aiSync();aiMode();aiPost('assistant',aiOn(p)?'✓ '+AIP[p].n+' মোড চালু ('+aiModel(p)+')।':p=='custom'?'কাস্টমের জন্য Base URL ও মডেলের নাম দুটোই লাগবে — বিল্ট-ইন মোডেই আছে।':'কোনো key দেওয়া হয়নি — বিল্ট-ইন মোডেই আছে।')};
 $('#aiKc').onclick=()=>{const p=$('#aiPv').value,K=LS('gb_aiks')||{};delete K[p];LS('gb_aiks',K);aiSync();aiMode();aiPost('assistant','Key মুছে ফেলা হয়েছে।'+(aiOn(aiPv())?'':' বিল্ট-ইন মোডে ফিরে এসেছি।'))};
+
+function cfg(){return((LS('gb_users')||{})[me]||{}).set||{}}
+function MAXSL(){return Math.max(1,+cfg().sl||2)}
+function ZMX(){return Math.max(2,+cfg().zm||5)}
+const QS=['আপনার প্রথম স্কুলের নাম কী?','আপনার মায়ের জন্মস্থান/গ্রামের নাম কী?','আপনার প্রিয় বন্ধুর ডাকনাম কী?','আপনার প্রথম মোবাইল ফোনের মডেল কী?'],BK=['gb_ot','gb_op','gb_td','gb_aip','gb_aiks','gb_aims','gb_aibs','gb_al'];
+function nrm(t){return String(t||'').trim().toLowerCase().replace(/\s+/g,' ')}
+function say(id,t,ok){const e=$('#'+id);e.textContent=t;e.className=ok?'ok':'er'}
+['#aq','#pq'].forEach(q=>{$(q).innerHTML=QS.map((x,i)=>`<option value="${i}">${x}</option>`).join('')});
+async function chk(pw){const u=(LS('gb_users')||{})[me];return !!u&&u.hash==await hsh(pw,u.salt)}
+document.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.lg').forEach(e=>e.classList.toggle('hide',mode!='login'));$('#rp').classList.add('hide')}));
+/* পাসওয়ার্ড রিসেট */
+let rU=null;
+$('#fp').onclick=e=>{e.preventDefault();$('#rp').classList.remove('hide');$('#re').value=$('#ae').value;$('#rsf').classList.add('hide');say('rm','')};
+$('#rc').onclick=()=>$('#rp').classList.add('hide');
+$('#rq').onclick=()=>{const em=$('#re').value.trim().toLowerCase(),u=(LS('gb_users')||{})[em];$('#rsf').classList.add('hide');rU=null;
+if(!u)return say('rm','এই ইমেইলে এই লিংক/ডিভাইসে কোনো অ্যাকাউন্ট পাওয়া যায়নি');
+if(!u.ah)return say('rm','এই অ্যাকাউন্টে সিকিউরিটি প্রশ্ন সেট করা নেই, তাই রিসেট করা যাবে না। ব্যাকআপ ফাইল থাকলে Login পাতার "ব্যাকআপ থেকে ফেরান" ব্যবহার করুন, নয়তো নতুন ইমেইলে Register করুন।');
+rU=em;$('#rqt').textContent=QS[u.q]||'';$('#rsf').classList.remove('hide');say('rm','')};
+$('#rs').onclick=async()=>{const U=LS('gb_users')||{},u=U[rU],L=LS('gb_rl')||{n:0,t:0};if(!u)return say('rm','আগে "প্রশ্ন দেখান" চাপুন');
+if(L.n>=5&&Date.now()<L.t)return say('rm','অনেকবার ভুল হয়েছে। '+Math.ceil((L.t-Date.now())/60000)+' মিনিট পরে চেষ্টা করুন');
+const pw=$('#rn').value;if(pw.length<6)return say('rm','নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে');if(pw!=$('#rn2').value)return say('rm','দুই পাসওয়ার্ড মিলছে না');
+if(await hsh(nrm($('#ra').value),u.as)!=u.ah){L.n=(L.t&&Date.now()>=L.t?0:L.n)+1;if(L.n>=5)L.t=Date.now()+300000;LS('gb_rl',L);return say('rm','উত্তর ভুল ('+Math.max(0,5-L.n)+' বার চেষ্টা বাকি)')}
+u.salt=Math.random().toString(36).slice(2);u.hash=await hsh(pw,u.salt);U[rU]=u;LS('gb_users',U);LS('gb_rl',{n:0,t:0});
+$('#ae').value=rU;$('#ap').value='';$('#rp').classList.add('hide');$('#ra').value=$('#rn').value=$('#rn2').value='';const e=$('#aer');e.textContent='✓ পাসওয়ার্ড বদলানো হয়েছে — নতুন পাসওয়ার্ড দিয়ে Login করুন';e.style.color='var(--buy)';setTimeout(()=>{e.style.color=''},6000)};
+/* প্রোফাইল ও সেটিংস */
+function openPf(){if(!me)return;const u=(LS('gb_users')||{})[me],s=u.set||{};$('#pn').value=u.name;$('#pe').textContent=me;
+$('#pqst').textContent=u.ah?'সেট আছে: '+(QS[u.q]||''):'এখনও সেট করা নেই — পাসওয়ার্ড ভুললে রিসেট করা যাবে না';if(u.ah)$('#pq').value=u.q;
+$('#sl').value=s.sl||2;$('#zm').value=s.zm||5;['pm1','pm2','pm3','pm4','pm5','pm6'].forEach(i=>say(i,''));['pcur','pw1','pw2','pqp','pa','dp'].forEach(i=>$('#'+i).value='');$('#pf').classList.remove('hide')}
+$('#pfb').onclick=openPf;$('#pc').onclick=()=>$('#pf').classList.add('hide');$('#lo').addEventListener('click',()=>$('#pf').classList.add('hide'));
+$('#pns').onclick=()=>{const n=$('#pn').value.trim();if(!n)return say('pm1','নাম লিখুন');const U=LS('gb_users')||{};U[me].name=n;LS('gb_users',U);$('#un').textContent='👤 '+n;say('pm1','✓ নাম সেভ হয়েছে',1)};
+$('#pps').onclick=async()=>{const a=$('#pcur').value,p=$('#pw1').value;if(!await chk(a))return say('pm2','বর্তমান পাসওয়ার্ড ভুল');if(p.length<6)return say('pm2','নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে');if(p!=$('#pw2').value)return say('pm2','দুই নতুন পাসওয়ার্ড মিলছে না');if(p==a)return say('pm2','নতুন পাসওয়ার্ড আগেরটার মতো হতে পারবে না');
+const U=LS('gb_users')||{},u=U[me];u.salt=Math.random().toString(36).slice(2);u.hash=await hsh(p,u.salt);LS('gb_users',U);['pcur','pw1','pw2'].forEach(i=>$('#'+i).value='');say('pm2','✓ পাসওয়ার্ড বদলানো হয়েছে',1)};
+$('#pqs').onclick=async()=>{const a=nrm($('#pa').value);if(!await chk($('#pqp').value))return say('pm3','বর্তমান পাসওয়ার্ড ভুল');if(a.length<2)return say('pm3','উত্তর কমপক্ষে ২ অক্ষরের দিন');
+const U=LS('gb_users')||{},u=U[me];u.q=+$('#pq').value;u.as=Math.random().toString(36).slice(2);u.ah=await hsh(a,u.as);LS('gb_users',U);$('#pa').value=$('#pqp').value='';$('#pqst').textContent='সেট আছে: '+QS[u.q];say('pm3','✓ সিকিউরিটি প্রশ্ন সেভ হয়েছে',1)};
+function saveTS(){const U=LS('gb_users')||{};if(!U[me])return;const sl=Math.min(20,Math.max(1,Math.round(+$('#sl').value||2))),zm=Math.min(15,Math.max(2,+$('#zm').value||5));U[me].set=Object.assign({},U[me].set,{sl,zm});LS('gb_users',U);$('#sl').value=sl;$('#zm').value=zm;say('pm4','✓ সেভ হয়েছে',1);try{sched()}catch(e){}}
+$('#sl').onchange=saveTS;$('#zm').onchange=saveTS;
+$('#bk').onclick=()=>{const K={};BK.forEach(k=>{const v=LS(k);if(v!=null)K[k]=v});const d={app:'gold-btc-smc',v:1,at:new Date().toISOString(),email:me,user:(LS('gb_users')||{})[me],journal:LS('gb_j'+me)||[],keys:K},b=new Blob([JSON.stringify(d)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='gold-btc-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);say('pm5','✓ ব্যাকআপ ফাইল নামানো হয়েছে। এতে API key আছে — কাউকে দেবেন না।',1)};
+async function rstr(f,out){try{const d=JSON.parse(await f.text());if(d.app!='gold-btc-smc'||!d.email||!d.user||!d.user.hash)throw 0;const U=LS('gb_users')||{};U[d.email]=d.user;LS('gb_users',U);LS('gb_j'+d.email,d.journal||[]);for(const k of BK)if(d.keys&&d.keys[k]!=null)LS(k,d.keys[k]);try{sessionStorage.setItem('gb_rm',d.email)}catch(e){}say(out,'✓ ফেরানো হয়েছে, অ্যাপ রিলোড হচ্ছে…',1);setTimeout(()=>location.reload(),1200)}catch(e){say(out,'ব্যাকআপ ফাইলটি সঠিক নয়')}}
+$('#br').onclick=()=>$('#bf').click();$('#bf').onchange=e=>{if(e.target.files[0])rstr(e.target.files[0],'pm5');e.target.value=''};
+$('#bl').onclick=e=>{e.preventDefault();$('#bf2').click()};$('#bf2').onchange=e=>{if(e.target.files[0])rstr(e.target.files[0],'aer');e.target.value=''};
+$('#cc').onclick=()=>{try{localStorage.removeItem('gb_tdc2')}catch(e){}say('pm5','ক্যাশ মুছেছে, রিলোড হচ্ছে…',1);setTimeout(()=>location.reload(),600)};
+$('#dl').onclick=async()=>{if(!await chk($('#dp').value))return say('pm6','পাসওয়ার্ড ভুল');if(!confirm('আপনার অ্যাকাউন্ট, জার্নাল ও সেটিংস স্থায়ীভাবে মুছে যাবে। নিশ্চিত?'))return;const U=LS('gb_users')||{},em=me;delete U[em];LS('gb_users',U);try{localStorage.removeItem('gb_j'+em)}catch(e){}$('#pf').classList.add('hide');$('#lo').click()};
+{let rm=null;try{rm=sessionStorage.getItem('gb_rm');sessionStorage.removeItem('gb_rm')}catch(e){}if(rm){$('#ae').value=rm;const e=$('#aer');e.textContent='✓ ব্যাকআপ ফেরানো হয়েছে — আগের পাসওয়ার্ড দিয়ে Login করুন';e.style.color='var(--buy)';setTimeout(()=>{e.style.color=''},8000)}}
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script></body></html>
